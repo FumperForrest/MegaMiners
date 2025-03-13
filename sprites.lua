@@ -6,9 +6,9 @@ flintPickIdle = love.graphics.newQuad(0,0,32,32,spriteSheet:getDimensions())
 flintPickSwing = love.graphics.newQuad(32,0,32,32,spriteSheet:getDimensions())
 flintPickFinal = love.graphics.newQuad(64,0,32,32,spriteSheet:getDimensions())
 
-stonePickIdle = love.graphics.newQuad(96,0,32,32,spriteSheet:getDimensions())
-stonePickSwing = love.graphics.newQuad(128,0,32,32,spriteSheet:getDimensions())
-stonePickFinal = love.graphics.newQuad(160,0,32,32,spriteSheet:getDimensions())
+ironPickIdle = love.graphics.newQuad(96,0,32,32,spriteSheet:getDimensions())
+ironPickSwing = love.graphics.newQuad(128,0,32,32,spriteSheet:getDimensions())
+ironPickFinal = love.graphics.newQuad(160,0,32,32,spriteSheet:getDimensions())
 
 goldPickIdle = love.graphics.newQuad(192,0,32,32,spriteSheet:getDimensions())
 goldPickSwing = love.graphics.newQuad(224,0,32,32,spriteSheet:getDimensions())
@@ -28,5 +28,8 @@ gold = love.graphics.newQuad(64,64,32,32,spriteSheet:getDimensions())
 diamonds = love.graphics.newQuad(96,64,32,32,spriteSheet:getDimensions())
 
 rockParticle = love.graphics.newQuad(0,96,16,16,spriteSheet:getDimensions())
+ironParticle = love.graphics.newQuad(16,96,16,16,spriteSheet:getDimensions())
+goldParticle = love.graphics.newQuad(32,96,16,16,spriteSheet:getDimensions())
+diamondParticle = love.graphics.newQuad(48,96,16,16,spriteSheet:getDimensions())
 
 fullscreenIcon = love.graphics.newQuad(0,112,16,16,spriteSheet:getDimensions())

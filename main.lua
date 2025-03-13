@@ -1,5 +1,6 @@
 require("sprites")
 require("map")
+require("particles")
 
 function love.load()
   camera = require 'libraries/camera'
@@ -8,23 +9,19 @@ function love.load()
   camSpeed = 500
   
   love.graphics.setDefaultFilter('nearest','nearest')
+
+  miningSrc = love.audio.newSource('Assets/mining.wav', 'stream')
+  breakSrc = love.audio.newSource('Assets/break.wav', 'stream')
+
+  musicSrc = love.audio.newSource('Assets/music.mp3','stream')
+  musicSrc.setLooping(musicSrc, true)
+  musicSrc.setVolume(musicSrc, .1)
+  musicSrc:play()
   
   spriteToBlock = 50/32
   
   fullscreenX = love.graphics.getWidth()-16
   fullscreenY = 0
-  
-  rockParticleSystem = love.graphics.newParticleSystem(spriteSheet, 100)
-  rockParticleSystem:setQuads(rockParticle)
-  
-  rockParticleSystem:setParticleLifetime(1, 3)
-  rockParticleSystem:setSizeVariation(0.5)
-  rockParticleSystem:setSpeed(30,50)
-  rockParticleSystem:setDirection(math.pi / 2)
-  rockParticleSystem:setLinearAcceleration(0,70,0,90)
-  rockParticleSystem:setSpread(1)
-  rockParticleSystem:setSpin(-5,5)
-  rockParticleSystem:setRotation(math.random(0,360))
   
   particleTriggered = false
   
@@ -33,11 +30,11 @@ function love.load()
   pickaxes = {}
   
   flintPick = { idle = flintPickIdle, swing = flintPickSwing, final = flintPickFinal, damage = 1 }
-  stonePick = { idle = stonePickIdle, swing = stonePickSwing, final = stonePickFinal, damage = 2.5 }
+  ironPick = { idle = ironPickIdle, swing = ironPickSwing, final = ironPickFinal, damage = 2.5 }
   goldPick = { idle = goldPickIdle, swing = goldPickSwing, final = goldPickFinal, damage = 5 }
   diamondPick = { idle = diamondPickIdle, swing = diamondPickSwing, final = diamondPickFinal, damage = 7.5 }
   
-  pick = { type = stonePick, x = 100, y = 100 }
+  pick = { type = flintPick, x = 100, y = 100 }
 
   currentPickSprite = pick.type.idle
   pickAnimTimer = 0
@@ -126,8 +123,22 @@ end
 function breakBlock(block, blockIndex, chunk)
   table.remove(chunk.blocks, blockIndex)
 
+  breakSrc:play()
+  miningSrc:stop()
+
   rockParticleSystem:setPosition(particleX, particleY)
   rockParticleSystem:emit(5)
+
+  if block.blockType == iron then
+    ironParticleSystem:setPosition(particleX, particleY)
+    ironParticleSystem:emit(3)
+  elseif block.blockType == gold then
+    goldParticleSystem:setPosition(particleX, particleY)
+    goldParticleSystem:emit(3)
+  elseif  block.blockType == diamonds then
+    diamondParticleSystem:setPosition(particleX, particleY)
+    diamondParticleSystem:emit(3)
+  end
         
   local slotFilled = false
   
@@ -163,7 +174,7 @@ function love.keypressed(key)
     if key == '1' then
       pick.type = flintPick
     elseif key == '2' then
-      pick.type = stonePick
+      pick.type = ironPick
     elseif key == '3' then
       pick.type = goldPick
     elseif key == '4' then
@@ -176,6 +187,9 @@ end
 
 function love.update(dt)
   rockParticleSystem:update(dt)
+  ironParticleSystem:update(dt)
+  goldParticleSystem:update(dt)
+  diamondParticleSystem:update(dt)
   
   pick.x, pick.y = love.mouse.getX(), love.mouse.getY()
   
@@ -194,6 +208,7 @@ function love.update(dt)
                 particleX, particleY = block.x + blockWidth / 2, block.y + blockHeight / 2
                 rockParticleSystem:setPosition(particleX, particleY)
                 rockParticleSystem:emit(1)
+
                 particleTriggered = true  -- Ensures particles emit only once per swing
               end
   
@@ -205,6 +220,8 @@ function love.update(dt)
                 breakBlock(block, blockIndex, chunk)
               else
                 block.health = block.health - pick.type.damage
+
+                miningSrc:play()
               end
             end
           end
@@ -231,16 +248,16 @@ function love.update(dt)
   
   local moveX, moveY = 0, 0
 
-  if love.keyboard.isDown("right") then
+  if love.keyboard.isDown("right") or love.keyboard.isDown("d") then
       moveX = moveX + camSpeed * dt
   end
-  if love.keyboard.isDown("left") then
+  if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
       moveX = moveX - camSpeed * dt
   end
-  if love.keyboard.isDown("down") then
+  if love.keyboard.isDown("down") or love.keyboard.isDown("s") then
       moveY = moveY + camSpeed * dt
   end
-  if love.keyboard.isDown("up") then
+  if love.keyboard.isDown("up") or love.keyboard.isDown("w") then
       moveY = moveY - camSpeed * dt
   end
 
@@ -255,21 +272,24 @@ function love.draw()
 
       if math.abs(chunk.x - camX) < renderDistance and math.abs(chunk.y - camY) < renderDistance then
         table.insert(loadedChunks, chunk)
-        for blockIndex, block in ipairs(chunk.blocks) do
-          if block.blockType then  -- Prevent errors if blockType is nil
-            love.graphics.draw(spriteSheet, block.blockType.sprite, block.x, block.y, 0, spriteToBlock, spriteToBlock)
-
-            if block.health < (9.9/10)*block.blockType.durability and block.health >= (6.5/10)*block.blockType.durability then
-              love.graphics.draw(spriteSheet, break1, block.x, block.y, 0, spriteToBlock, spriteToBlock)
-            elseif block.health < (6.5/10)*block.blockType.durability and block.health >= (3/10)*block.blockType.durability then
-              love.graphics.draw(spriteSheet, break2, block.x, block.y, 0, spriteToBlock, spriteToBlock)
-            elseif block.health < (3/10)*block.blockType.durability and block.health >= 0 then
-              love.graphics.draw(spriteSheet, break3, block.x, block.y, 0, spriteToBlock, spriteToBlock)
-            end
-          end
-        end
       else
         table.remove(loadedChunks, chunkIndex)
+      end
+    end
+
+    for chunkIndex, chunk in ipairs(loadedChunks) do
+      for blockIndex, block in ipairs(chunk.blocks) do
+        if block.blockType then  -- Prevent errors if blockType is nil
+          love.graphics.draw(spriteSheet, block.blockType.sprite, block.x, block.y, 0, spriteToBlock, spriteToBlock)
+
+          if block.health < (9.9/10)*block.blockType.durability and block.health >= (6.5/10)*block.blockType.durability then
+            love.graphics.draw(spriteSheet, break1, block.x, block.y, 0, spriteToBlock, spriteToBlock)
+          elseif block.health < (6.5/10)*block.blockType.durability and block.health >= (3/10)*block.blockType.durability then
+            love.graphics.draw(spriteSheet, break2, block.x, block.y, 0, spriteToBlock, spriteToBlock)
+          elseif block.health < (3/10)*block.blockType.durability and block.health >= 0 then
+            love.graphics.draw(spriteSheet, break3, block.x, block.y, 0, spriteToBlock, spriteToBlock)
+          end
+        end
       end
     end
     
@@ -277,6 +297,9 @@ function love.draw()
     particleY = pick.y
     
     love.graphics.draw(rockParticleSystem)
+    love.graphics.draw(ironParticleSystem)
+    love.graphics.draw(goldParticleSystem)
+    love.graphics.draw(diamondParticleSystem)
   cam:detach()
 
   love.graphics.draw(spriteSheet, fullscreenIcon, fullscreenX, fullscreenY)
