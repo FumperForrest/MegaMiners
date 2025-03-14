@@ -55,14 +55,14 @@ function generateMap(chunksPerRow, chunksPerColumn)
                         items = {},
                         slotsUsed = 0,
                     }
-                    itemizeChest(block, stoneItem)
-                    itemizeChest(block, ironItem)
-                    itemizeChest(block, goldItem)
-                    itemizeChest(block, diamondItem)
-                    itemizeChest(block, amethystItem)
-                    itemizeChest(block, forrestiteItem)
-                    itemizeChest(block, carrotItem)
-                    itemizeChest(block, breadItem)
+                    itemizeChest(block, stoneItem, 5)
+                    itemizeChest(block, ironItem, 3)
+                    itemizeChest(block, goldItem, 3)
+                    itemizeChest(block, diamondItem, 5)
+                    itemizeChest(block, amethystItem, 1)
+                    itemizeChest(block, forrestiteItem, 1)
+                    itemizeChest(block, carrotItem, 3)
+                    itemizeChest(block, breadItem, 5)
                 elseif math.random(1, 10) == 1 then
                     blockType = blockTypes[math.random(1, #mineables)]
                     block = {
@@ -90,18 +90,18 @@ function generateMap(chunksPerRow, chunksPerColumn)
   end
 end
 
-function itemizeChest(chest, itemType)
+function itemizeChest(chest, itemType, amount)
     local itemFound = false
 
     for itemIndex, item in ipairs(chest.items) do
         if item.itemType == itemType then
-            item.amount = item.amount + 1
+            item.amount = item.amount + amount
             itemFound = true
             break
         end
     end
 
     if not itemFound then
-        table.insert(chest.items, { itemType = itemType, amount = 1 })
+        table.insert(chest.items, { itemType = itemType, amount = amount })
     end
 end
