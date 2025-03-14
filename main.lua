@@ -1,169 +1,326 @@
+-- Required Libraries
 require("sprites")
 require("map")
 require("particles")
+require("items")
 
+-- Global Variables
+local camera = require 'libraries/camera'
+local cam
+local camSpeed = 500
+local miningSrc, breakSrc, musicSrc
+local spriteToBlock = 50/32
+local chestOpen = nil
+local fullscreenX, fullscreenY
+local particleTriggered = false
+local particleX, particleY = 0, 0
+local pickaxes = {}
+local pick
+local cx, cy, cw, ch
+local exitButtonSize = 16
+local chestMenuScale = 3 
+local chestMenuX, chestMenuY
+local canMine = true
+local currentPickSprite
+local pickAnimTimer = 0
+local pickSwinging = false
+local loadedChunks = {}
+local renderDistance = 1000
+local inventory = {}
+
+-- Load Function
 function love.load()
-  camera = require 'libraries/camera'
   cam = camera()
-  
-  camSpeed = 500
-  
   love.graphics.setDefaultFilter('nearest','nearest')
 
   miningSrc = love.audio.newSource('Assets/mining.wav', 'stream')
   breakSrc = love.audio.newSource('Assets/break.wav', 'stream')
-
   musicSrc = love.audio.newSource('Assets/music.mp3','stream')
-  musicSrc.setLooping(musicSrc, true)
-  musicSrc.setVolume(musicSrc, .1)
+  musicSrc:setLooping(true)
+  musicSrc:setVolume(0.1)
   musicSrc:play()
-  
-  spriteToBlock = 50/32
-  
-  fullscreenX = love.graphics.getWidth()-16
+
+  fullscreenX = love.graphics.getWidth() - 16
   fullscreenY = 0
-  
-  particleTriggered = false
-  
-  particleX, particleY = 0,0
-  
-  pickaxes = {}
-  
+
+  initializePickaxes()
+  initializeChestMenu()
+  initializeInventory(6)
+  generateMap(50, 50)
+end
+
+-- Initialize Pickaxes
+function initializePickaxes()
   flintPick = { idle = flintPickIdle, swing = flintPickSwing, final = flintPickFinal, damage = 1 }
   ironPick = { idle = ironPickIdle, swing = ironPickSwing, final = ironPickFinal, damage = 2.5 }
   goldPick = { idle = goldPickIdle, swing = goldPickSwing, final = goldPickFinal, damage = 5 }
   diamondPick = { idle = diamondPickIdle, swing = diamondPickSwing, final = diamondPickFinal, damage = 7.5 }
+  amethystPick = { idle = amethystPickIdle, swing = amethystPickSwing, final = amethystPickFinal, damage = 10 }
+  forrestitePick = { idle = forrestitePickIdle, swing = forrestitePickSwing, final = forrestitePickFinal, damage = 15 }
   
   pick = { type = flintPick, x = 100, y = 100 }
-
   currentPickSprite = pick.type.idle
-  pickAnimTimer = 0
-  
-  pickSwinging = false
-
-  loadedChunks = {}
-
-  renderDistance = 1000
-  
-  --inventory
-  inventory = {}
-  
-  makeSlots(5)
-  
-  generateMap(50,50)
 end
 
-function makeSlots(number)
+-- Initialize Chest Menu
+function initializeChestMenu()
+  cx, cy, cw, ch = chestMenu:getViewport()
+  chestMenuX = (love.graphics.getWidth() / 2) - ((cw * chestMenuScale) / 2)
+  chestMenuY = (love.graphics.getHeight() / 2) - ((ch * chestMenuScale) / 2)
+end
+
+-- Initialize Inventory
+function initializeInventory(number)
   for i = 1, number do
-    local slot = {
-      item = nil,
-      amount = 0,
-    }
-    
+    local slot = { item = nil, amount = 0 }
     table.insert(inventory, slot)
   end
 end
 
-function drawPick(x,y)
-  love.graphics.draw(spriteSheet,currentPickSprite,x-15,y-15)
+-- Draw Functions
+function love.draw()
+  cam:attach()
+  drawMap()
+  drawParticles()
+  cam:detach()
+
+  love.graphics.draw(spriteSheet, fullscreenIcon, fullscreenX, fullscreenY)
+  drawBorderedText(love.timer.getFPS(), 0, 0)
+  drawPick(pick.x, pick.y)
+  drawInventory()
+
+  if chestOpen ~= nil then
+    drawChest(chestOpen)
+  end
 end
 
-function drawInventory()
-  local slotMargin = 5
-  
-  local slotSize = 40
-  local itemSize = 30
-  
-  for slotIndex, slot in ipairs(inventory) do
-    local slotX = slotIndex * slotSize - slotSize + slotMargin*slotIndex
-    local slotY = love.graphics.getHeight() - slotSize - slotMargin
-    
-    --light brown
-    love.graphics.setColor(.7,.5,.3)
-    love.graphics.rectangle('fill', slotX, slotY, slotSize, slotSize)
-    
-    --draw item
-    if slot.item then
-      love.graphics.setColor(1, 1, 1)
-    
-      -- Calculate item position to center it
-      local itemX = slotX + (slotSize - itemSize) / 2
-      local itemY = slotY + (slotSize - itemSize) / 2
-      
-      love.graphics.draw(spriteSheet, slot.item.sprite, itemX, itemY, 0, itemSize / 32, itemSize / 32)
+function drawMap()
+  for chunkIndex, chunk in ipairs(chunks) do
+    local camX, camY = cam:position()
+    if math.abs(chunk.x - camX) < renderDistance and math.abs(chunk.y - camY) < renderDistance then
+      table.insert(loadedChunks, chunk)
+    else
+      table.remove(loadedChunks, chunkIndex)
     end
-    
-    --slot border
-    love.graphics.setColor(.5,.3,.1)
-    love.graphics.setLineWidth(3)
-    love.graphics.rectangle('line', slotIndex * slotSize - slotSize + slotMargin*slotIndex, love.graphics.getHeight() - slotSize - slotMargin, slotSize, slotSize)
-    
-    --draw count
-    drawBorderedText(slot.amount, slotIndex * slotSize - slotSize + slotMargin*slotIndex, love.graphics.getHeight() - slotSize - slotMargin)
   end
-end
 
-function checkCollision(x, y, pickX, pickY, width, height)
-  return pickX >= x
-  and pickX <= x + width
-  and pickY >= y
-  and pickY <= y + height
-end
-
-function drawBorderedText(text, x, y)
-  love.graphics.setColor(0,0,0)
-  love.graphics.print(text, x,y+1)
-  love.graphics.print(text, x+1,y)
-  love.graphics.print(text, x+2,y+1)
-  love.graphics.print(text, x+1,y+2)
-  love.graphics.setColor(1,1,1)
-  love.graphics.print(text, x+1,y+1)
-end
-
-function breakBlock(block, blockIndex, chunk)
-  table.remove(chunk.blocks, blockIndex)
-
-  breakSrc:play()
-  miningSrc:stop()
-
-  rockParticleSystem:setPosition(particleX, particleY)
-  rockParticleSystem:emit(5)
-
-  if block.blockType == iron then
-    ironParticleSystem:setPosition(particleX, particleY)
-    ironParticleSystem:emit(3)
-  elseif block.blockType == gold then
-    goldParticleSystem:setPosition(particleX, particleY)
-    goldParticleSystem:emit(3)
-  elseif  block.blockType == diamonds then
-    diamondParticleSystem:setPosition(particleX, particleY)
-    diamondParticleSystem:emit(3)
-  end
-        
-  local slotFilled = false
-  
-  for slotIndex, slot in ipairs(inventory) do
-    if slotFilled == false then
-      if slot.item == block.blockType then
-        slotFilled = true
-        slot.amount = slot.amount + 1
-        slot.item = block.blockType
-      elseif slot.item == nil then
-        slotFilled = true
-        slot.item = block.blockType
-        slot.amount = slot.amount + 1
+  for chunkIndex, chunk in ipairs(loadedChunks) do
+    for blockIndex, block in ipairs(chunk.blocks) do
+      if block.blockType then
+        love.graphics.draw(spriteSheet, block.blockType.sprite, block.x, block.y, 0, spriteToBlock, spriteToBlock)
+        drawBlockDamage(block)
       end
     end
   end
 end
 
-function love.mousepressed(mx,my,button)
+function drawBlockDamage(block)
+  if block.blockType.type == 'mineable' then
+    if block.health < (9.9/10) * block.blockType.durability and block.health >= (6.5/10) * block.blockType.durability then
+      love.graphics.draw(spriteSheet, break1, block.x, block.y, 0, spriteToBlock, spriteToBlock)
+    elseif block.health < (6.5/10) * block.blockType.durability and block.health >= (3/10) * block.blockType.durability then
+      love.graphics.draw(spriteSheet, break2, block.x, block.y, 0, spriteToBlock, spriteToBlock)
+    elseif block.health < (3/10) * block.blockType.durability and block.health >= 0 then
+      love.graphics.draw(spriteSheet, break3, block.x, block.y, 0, spriteToBlock, spriteToBlock)
+    end
+  end
+end
+
+function drawParticles()
+  love.graphics.draw(rockParticleSystem)
+  love.graphics.draw(ironParticleSystem)
+  love.graphics.draw(goldParticleSystem)
+  love.graphics.draw(diamondParticleSystem)
+  love.graphics.draw(amethystParticleSystem)
+  love.graphics.draw(forrestiteParticleSystem)
+end
+
+function drawPick(x, y)
+  love.graphics.draw(spriteSheet, currentPickSprite, x - 15, y - 15)
+end
+
+function drawInventory()
+  local slotMargin = 5
+  local slotSize = 40
+  local itemSize = 30
+
+  for slotIndex, slot in ipairs(inventory) do
+    local slotX = slotIndex * slotSize - slotSize + slotMargin * slotIndex
+    local slotY = love.graphics.getHeight() - slotSize - slotMargin
+
+    love.graphics.setColor(0.7, 0.5, 0.3)
+    love.graphics.rectangle('fill', slotX, slotY, slotSize, slotSize)
+
+    if slot.item then
+      love.graphics.setColor(1, 1, 1)
+      local itemX = slotX + (slotSize - itemSize) / 2
+      local itemY = slotY + (slotSize - itemSize) / 2
+      love.graphics.draw(spriteSheet, slot.item.sprite, itemX, itemY, 0, itemSize / 32, itemSize / 32)
+    end
+
+    love.graphics.setColor(0.5, 0.3, 0.1)
+    love.graphics.setLineWidth(3)
+    love.graphics.rectangle('line', slotX, slotY, slotSize, slotSize)
+    drawBorderedText(slot.amount, slotX, slotY)
+  end
+end
+
+function drawChest(chest)
+  local itemMargin = 11 * chestMenuScale
+  local itemSpacing = 31 * chestMenuScale
+  local chestColumns = 7
+  local chestRows = 4
+
+  love.graphics.draw(spriteSheet, chestMenu, chestMenuX, chestMenuY, 0, chestMenuScale, chestMenuScale)
+  love.graphics.draw(spriteSheet, exitIcon, chestMenuX - exitButtonSize, chestMenuY - exitButtonSize, 0, chestMenuScale, chestMenuScale)
+
+  if not chest then
+    print("Error: chest is nil")
+    return
+  end
+
+  for itemIndex, item in ipairs(chest.items) do
+    local itemX = chestMenuX + itemIndex * itemMargin
+    local row = 1
+
+    if 0 < itemIndex and itemIndex <= 7 then
+      itemX = chestMenuX + itemMargin + ((itemIndex - 1) * itemSpacing)
+      row = 0
+    elseif 7 < itemIndex and itemIndex <= 14 then
+      itemX = chestMenuX + ((itemIndex - 1) - 7) * itemSpacing + itemMargin
+      row = 1
+    elseif 14 < itemIndex and itemIndex <= 21 then
+      itemX = chestMenuX + ((itemIndex - 1) - 14) * itemSpacing + itemMargin
+      row = 2
+    elseif 21 < itemIndex and itemIndex <= 28 then
+      itemX = chestMenuX + ((itemIndex - 1) - 21) * itemSpacing + itemMargin
+      row = 2
+    end
+
+    local rowY = row * itemSpacing + itemMargin
+    love.graphics.draw(spriteSheet, item.itemType.sprite, itemX, chestMenuY + rowY, 0, chestMenuScale, chestMenuScale)
+    drawBorderedText(item.amount, itemX, chestMenuY + rowY)
+  end
+end
+
+function drawBorderedText(text, x, y)
+  love.graphics.setColor(0, 0, 0)
+  love.graphics.print(text, x, y + 1)
+  love.graphics.print(text, x + 1, y)
+  love.graphics.print(text, x + 2, y + 1)
+  love.graphics.print(text, x + 1, y + 2)
+  love.graphics.setColor(1, 1, 1)
+  love.graphics.print(text, x + 1, y + 1)
+end
+
+-- Update Function
+function love.update(dt)
+  updateParticles(dt)
+  updatePick(dt)
+  updateCamera(dt)
+end
+
+function updateParticles(dt)
+  rockParticleSystem:update(dt)
+  ironParticleSystem:update(dt)
+  goldParticleSystem:update(dt)
+  diamondParticleSystem:update(dt)
+  amethystParticleSystem:update(dt)
+  forrestiteParticleSystem:update(dt)
+end
+
+function updatePick(dt)
+  pick.x, pick.y = love.mouse.getX(), love.mouse.getY()
+  local worldPickX, worldPickY = cam:worldCoords(pick.x, pick.y)
+
+  if love.mouse.isDown(1) then
+    if not pickSwinging and canMine then
+      pickSwinging = true
+      particleTriggered = false
+
+      for chunkIndex, chunk in ipairs(loadedChunks) do
+        for blockIndex, block in ipairs(chunk.blocks) do
+          if block.blockType then
+            if checkCollision(block.x, block.y, worldPickX, worldPickY, blockWidth, blockHeight) and block.blockType.type == 'mineable' then
+              if not particleTriggered then
+                particleX, particleY = block.x + blockWidth / 2, block.y + blockHeight / 2
+                rockParticleSystem:setPosition(particleX, particleY)
+                rockParticleSystem:emit(1)
+                particleTriggered = true
+              end
+
+              if not block.health then
+                block.health = block.blockType.durability
+              end
+
+              if block.health <= 0 then
+                breakBlock(block, blockIndex, chunk)
+              else
+                block.health = block.health - pick.type.damage
+                miningSrc:play()
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
+  if pickSwinging then
+    pickAnimTimer = pickAnimTimer + dt * 200
+    if pickAnimTimer <= 20 then
+      currentPickSprite = pick.type.idle
+    elseif pickAnimTimer <= 40 then
+      currentPickSprite = pick.type.swing
+    elseif pickAnimTimer <= 60 then
+      currentPickSprite = pick.type.final
+    else
+      pickSwinging = false
+      pickAnimTimer = 0
+      currentPickSprite = pick.type.idle
+    end
+  end
+end
+
+function updateCamera(dt)
+  local moveX, moveY = 0, 0
+  if love.keyboard.isDown("right") or love.keyboard.isDown("d") then
+    moveX = moveX + camSpeed * dt
+  end
+  if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
+    moveX = moveX - camSpeed * dt
+  end
+  if love.keyboard.isDown("down") or love.keyboard.isDown("s") then
+    moveY = moveY + camSpeed * dt
+  end
+  if love.keyboard.isDown("up") or love.keyboard.isDown("w") then
+    moveY = moveY - camSpeed * dt
+  end
+  cam:move(moveX, moveY)
+end
+
+-- Input Functions
+function love.mousepressed(mx, my, button)
   if button == 1 then
     if checkCollision(fullscreenX, fullscreenY, mx, my, 16, 16) then
-      if love.window.getFullscreen() then
-        love.window.setFullscreen(false)
-      else
-        love.window.setFullscreen(true, 'exclusive')
+      toggleFullscreen()
+    elseif checkCollision(chestMenuX, chestMenuY, mx, my, 16 * chestMenuScale, 16 * chestMenuScale) then
+      if chestOpen then
+        chestOpen = nil
+        canMine = true
+      end
+    end
+  elseif button == 2 then
+    for chunkIndex, chunk in ipairs(loadedChunks) do
+      for blockIndex, block in ipairs(chunk.blocks) do
+        if block.blockType == chest then
+          local camBlockX, camBlockY = cam:cameraCoords(block.x, block.y)
+
+          if checkCollision(camBlockX, camBlockY, mx, my, 32, 32) then
+            chestOpen = block
+            canMine = false
+          end
+        end
       end
     end
   end
@@ -179,131 +336,63 @@ function love.keypressed(key)
       pick.type = goldPick
     elseif key == '4' then
       pick.type = diamondPick
+    elseif key == '5' then
+      pick.type = amethystPick
+    elseif key == '6' then
+      pick.type = forrestitePick
     end
-
     currentPickSprite = pick.type.idle
   end
 end
 
-function love.update(dt)
-  rockParticleSystem:update(dt)
-  ironParticleSystem:update(dt)
-  goldParticleSystem:update(dt)
-  diamondParticleSystem:update(dt)
-  
-  pick.x, pick.y = love.mouse.getX(), love.mouse.getY()
-  
-  local worldPickX, worldPickY = cam:worldCoords(pick.x, pick.y)
-  
-  if love.mouse.isDown(1) then
-    if not pickSwinging then
-      pickSwinging = true
-      particleTriggered = false  -- Reset the flag when a new swing starts
-
-      for chunkIndex, chunk in ipairs(loadedChunks) do
-        for blockIndex, block in ipairs(chunk.blocks) do
-          if block.blockType then
-            if checkCollision(block.x, block.y, worldPickX, worldPickY, blockWidth, blockHeight) then
-              if not particleTriggered then
-                particleX, particleY = block.x + blockWidth / 2, block.y + blockHeight / 2
-                rockParticleSystem:setPosition(particleX, particleY)
-                rockParticleSystem:emit(1)
-
-                particleTriggered = true  -- Ensures particles emit only once per swing
-              end
-  
-              if not block.health then
-                block.health = block.blockType.durability
-              end
-  
-              if block.health <= 0 then
-                breakBlock(block, blockIndex, chunk)
-              else
-                block.health = block.health - pick.type.damage
-
-                miningSrc:play()
-              end
-            end
-          end
-        end
-      end
-    end
-  end
-
-  if pickSwinging then
-    pickAnimTimer = pickAnimTimer + dt * 200
-    
-    if pickAnimTimer <= 20 then
-      currentPickSprite = pick.type.idle
-    elseif pickAnimTimer <= 40 then
-      currentPickSprite = pick.type.swing
-    elseif pickAnimTimer <= 60 then
-      currentPickSprite = pick.type.final
-    else
-      pickSwinging = false
-      pickAnimTimer = 0
-      currentPickSprite = pick.type.idle
-    end
-  end
-  
-  local moveX, moveY = 0, 0
-
-  if love.keyboard.isDown("right") or love.keyboard.isDown("d") then
-      moveX = moveX + camSpeed * dt
-  end
-  if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
-      moveX = moveX - camSpeed * dt
-  end
-  if love.keyboard.isDown("down") or love.keyboard.isDown("s") then
-      moveY = moveY + camSpeed * dt
-  end
-  if love.keyboard.isDown("up") or love.keyboard.isDown("w") then
-      moveY = moveY - camSpeed * dt
-  end
-
-  cam:move(moveX, moveY)
+-- Utility Functions
+function checkCollision(x, y, pickX, pickY, width, height)
+  return pickX >= x and pickX <= x + width and pickY >= y and pickY <= y + height
 end
 
-function love.draw()
-  cam:attach()
-    --Draw map
-    for chunkIndex, chunk in ipairs(chunks) do
-      local camX, camY = cam:position()
+function toggleFullscreen()
+  if love.window.getFullscreen() then
+    love.window.setFullscreen(false)
+  else
+    love.window.setFullscreen(true, 'exclusive')
+  end
+end
 
-      if math.abs(chunk.x - camX) < renderDistance and math.abs(chunk.y - camY) < renderDistance then
-        table.insert(loadedChunks, chunk)
-      else
-        table.remove(loadedChunks, chunkIndex)
+function breakBlock(block, blockIndex, chunk)
+  table.remove(chunk.blocks, blockIndex)
+  breakSrc:play()
+  miningSrc:stop()
+  rockParticleSystem:setPosition(particleX, particleY)
+  rockParticleSystem:emit(5)
+
+  if block.blockType == iron then
+    ironParticleSystem:setPosition(particleX, particleY)
+    ironParticleSystem:emit(3)
+  elseif block.blockType == gold then
+    goldParticleSystem:setPosition(particleX, particleY)
+    goldParticleSystem:emit(3)
+  elseif block.blockType == diamonds then
+    diamondParticleSystem:setPosition(particleX, particleY)
+    diamondParticleSystem:emit(3)
+  elseif block.blockType == amethyst then
+    amethystParticleSystem:setPosition(particleX, particleY)
+    amethystParticleSystem:emit(3)
+  elseif block.blockType == forrestite then
+    forrestiteParticleSystem:setPosition(particleX, particleY)
+    forrestiteParticleSystem:emit(3)
+  end
+
+  local slotFilled = false
+  for slotIndex, slot in ipairs(inventory) do
+    if not slotFilled then
+      if slot.item == block.blockType then
+        slotFilled = true
+        slot.amount = slot.amount + 1
+      elseif slot.item == nil then
+        slotFilled = true
+        slot.item = block.blockType
+        slot.amount = slot.amount + 1
       end
     end
-
-    for chunkIndex, chunk in ipairs(loadedChunks) do
-      for blockIndex, block in ipairs(chunk.blocks) do
-        if block.blockType then  -- Prevent errors if blockType is nil
-          love.graphics.draw(spriteSheet, block.blockType.sprite, block.x, block.y, 0, spriteToBlock, spriteToBlock)
-
-          if block.health < (9.9/10)*block.blockType.durability and block.health >= (6.5/10)*block.blockType.durability then
-            love.graphics.draw(spriteSheet, break1, block.x, block.y, 0, spriteToBlock, spriteToBlock)
-          elseif block.health < (6.5/10)*block.blockType.durability and block.health >= (3/10)*block.blockType.durability then
-            love.graphics.draw(spriteSheet, break2, block.x, block.y, 0, spriteToBlock, spriteToBlock)
-          elseif block.health < (3/10)*block.blockType.durability and block.health >= 0 then
-            love.graphics.draw(spriteSheet, break3, block.x, block.y, 0, spriteToBlock, spriteToBlock)
-          end
-        end
-      end
-    end
-    
-    particleX = pick.x
-    particleY = pick.y
-    
-    love.graphics.draw(rockParticleSystem)
-    love.graphics.draw(ironParticleSystem)
-    love.graphics.draw(goldParticleSystem)
-    love.graphics.draw(diamondParticleSystem)
-  cam:detach()
-
-  love.graphics.draw(spriteSheet, fullscreenIcon, fullscreenX, fullscreenY)
-  drawBorderedText(love.timer.getFPS(), 0,0)
-  drawPick(pick.x, pick.y)
-  drawInventory()
+  end
 end

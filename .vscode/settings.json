@@ -2,5 +2,8 @@
     "Lua.diagnostics.globals": [
         "love",
         "camera"
+    ],
+    "Lua.diagnostics.disable": [
+        "lowercase-global"
     ]
 }

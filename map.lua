@@ -1,3 +1,5 @@
+require("items")
+
 blockWidth = 50
 blockHeight = 50
 
@@ -10,15 +12,26 @@ chunks = {}
 chunkWidth = 15
 chunkHeight = 15
 
-stone = { durability = 5, sprite = stone }
-iron = { durability = 10, sprite = iron }
-gold = { durability = 25, sprite = gold }
-diamonds = { durability = 35, sprite = diamonds }
+chestSlots = 28
+
+stone = { type = 'mineable', durability = 5, sprite = stoneSprite }
+iron = { type = 'mineable', durability = 10, sprite = ironSprite }
+gold = { type = 'mineable', durability = 25, sprite = goldSprite }
+diamonds = { type = 'mineable', durability = 35, sprite = diamondsSprite }
+amethyst = { type = 'mineable', durability = 50, sprite = amethystSprite }
+forrestite = { type = 'mineable', durability = 100, sprite = forrestiteSprite }
+
+chest = { type = 'interactable', sprite = chest }
 
 table.insert(blockTypes, stone)
 table.insert(blockTypes, iron)
 table.insert(blockTypes, gold)
 table.insert(blockTypes, diamonds)
+table.insert(blockTypes, amethyst)
+table.insert(blockTypes, forrestite)
+table.insert(blockTypes, chest)
+
+local mineables = {stone, iron, gold, diamonds, amethyst, forrestite}
 
 function generateMap(chunksPerRow, chunksPerColumn)
   for chunkX = 0, chunksPerRow - 1 do
@@ -31,31 +44,64 @@ function generateMap(chunksPerRow, chunksPerColumn)
 
           for widthIndex = 1, chunkWidth do
               for heightIndex = 1, chunkHeight do
-                  local block = {}
+                local block = {}
 
-                  if math.random(1, 10) == 1 then
-                      local blockType = blockTypes[math.random(1, #blockTypes)]
-                      block = {
-                          blockType = blockType,
-                          x = chunkX * chunkWidth * blockWidth + (widthIndex - 1) * blockWidth,
-                          y = chunkY * chunkHeight * blockHeight + (heightIndex - 1) * blockHeight,
-                          health = blockType.durability
-                      }
-                  else
-                      local blockType = stone
-                      block = {
-                          blockType = blockType,
-                          x = chunkX * chunkWidth * blockWidth + (widthIndex - 1) * blockWidth,
-                          y = chunkY * chunkHeight * blockHeight + (heightIndex - 1) * blockHeight,
-                          health = blockType.durability
-                      }
-                  end
+                if math.random(1, 100) == 1 then
+                    blockType = chest
+                    block = {
+                        blockType = blockType,
+                        x = chunkX * chunkWidth * blockWidth + (widthIndex - 1) * blockWidth,
+                        y = chunkY * chunkHeight * blockHeight + (heightIndex - 1) * blockHeight,
+                        items = {},
+                        slotsUsed = 0,
+                    }
+                    itemizeChest(block, stoneItem)
+                    itemizeChest(block, ironItem)
+                    itemizeChest(block, goldItem)
+                    itemizeChest(block, diamondItem)
+                    itemizeChest(block, amethystItem)
+                    itemizeChest(block, forrestiteItem)
+                    itemizeChest(block, carrotItem)
+                    itemizeChest(block, breadItem)
+                elseif math.random(1, 10) == 1 then
+                    blockType = blockTypes[math.random(1, #mineables)]
+                    block = {
+                        blockType = blockType,
+                        x = chunkX * chunkWidth * blockWidth + (widthIndex - 1) * blockWidth,
+                        y = chunkY * chunkHeight * blockHeight + (heightIndex - 1) * blockHeight,
+                        health = blockType.durability
+                    }
+                else
+                    blockType = stone
+                    block = {
+                        blockType = blockType,
+                        x = chunkX * chunkWidth * blockWidth + (widthIndex - 1) * blockWidth,
+                        y = chunkY * chunkHeight * blockHeight + (heightIndex - 1) * blockHeight,
+                        health = blockType.durability
+                    }
+                end
 
-                  table.insert(chunk.blocks, block)  -- Insert block into the chunk
+                table.insert(chunk.blocks, block)  -- Insert block into the chunk
               end
           end
 
           table.insert(chunks, chunk)  -- Insert the chunk into the chunks table
       end
   end
+end
+
+function itemizeChest(chest, itemType)
+    local itemFound = false
+
+    for itemIndex, item in ipairs(chest.items) do
+        if item.itemType == itemType then
+            item.amount = item.amount + 1
+            itemFound = true
+            break
+        end
+    end
+
+    if not itemFound then
+        table.insert(chest.items, { itemType = itemType, amount = 1 })
+    end
 end
