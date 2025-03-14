@@ -7,7 +7,7 @@ require("items")
 -- Global Variables
 local camera = require 'libraries/camera'
 local cam
-local camSpeed = 500
+local camSpeed = 350
 local miningSrc, breakSrc, musicSrc
 local spriteToBlock = 50/32
 local chestOpen = nil
@@ -44,7 +44,7 @@ function love.load()
     extern number time;
     vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
         vec4 pixel = Texel(texture, texture_coords);
-        float glow = sin(time * 5.0) * 0.5 + 0.5;
+        float glow = sin(time * 3.0) * 0.5 + 0.5; // Adjust frequency to 2.0 for slower animation
         if (pixel.r > 0.5 && pixel.b > 0.5 && pixel.g < 0.5) {
             pixel.rgb += glow * vec3(0.5, 0.0, 0.5); // Amethyst glow
         } else if (pixel.g > 0.5 && pixel.b < 0.5 && pixel.r < 0.5) {
@@ -52,9 +52,32 @@ function love.load()
         }
         return pixel * color;
     }
+  ]]
+  
+  local vignetteShaderCode = [[
+    extern number time;
+    vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
+        vec4 pixel = Texel(texture, texture_coords);
+
+        vec2 center = vec2(0.5, 0.5);
+        float dist = distance(texture_coords, center);
+
+        float vignette = smoothstep(0.3, 0.8, dist);
+
+        float mist = sin(time * 1.5 + texture_coords.x * 10.0) * 0.1;
+        mist += cos(time * 1.2 + texture_coords.y * 12.0) * 0.1;
+
+        vignette = clamp(vignette + mist, 0.0, 1.0);
+
+        pixel.rgb *= mix(vec3(1.0), vec3(0.5), vignette);
+
+        return pixel;
+    }
 ]]
 
-  shader = love.graphics.newShader(oreShaderCode)
+  vignetteShader = love.graphics.newShader(vignetteShaderCode)
+  oreShader = love.graphics.newShader(oreShaderCode)
+  screenshot = love.graphics.newCanvas(love.graphics.getWidth(), love.graphics.getHeight())
 
   fullscreenX = love.graphics.getWidth() - 16
   fullscreenY = 0
@@ -63,6 +86,10 @@ function love.load()
   initializeChestMenu()
   initializeInventory(6)
   generateMap(50, 50)
+end
+
+function love.resize(w, h)
+  screenshot = love.graphics.newCanvas(w, h)
 end
 
 -- Initialize Pickaxes
@@ -94,21 +121,41 @@ function initializeInventory(number)
 end
 
 -- Draw Functions
-function love.draw()
-  cam:attach()
+function love.preDraw()
+  screenshot = love.graphics.newCanvas(love.graphics.getWidth(), love.graphics.getHeight())
+  love.graphics.setCanvas(screenshot)
+  love.graphics.clear()
+end
 
+function love.draw()
+  -- Draw the entire scene to the canvas
+  love.graphics.setCanvas(screenshot)
+  love.graphics.clear()
+
+  cam:attach()
   drawMap()
   drawParticles()
   cam:detach()
 
-  love.graphics.draw(spriteSheet, fullscreenIcon, fullscreenX, fullscreenY)
+  love.graphics.setCanvas() -- Back to main screen
+
+  -- Apply shader effect
+  love.graphics.setShader(vignetteShader)
+  love.graphics.draw(screenshot)
+  love.graphics.setShader() -- Turn off the shader
+
+  -- HUD/Overlay elements drawn after shader
   drawBorderedText(love.timer.getFPS(), 0, 0)
   drawPick(pick.x, pick.y)
   drawInventory()
 
   if chestOpen ~= nil then
-    drawChest(chestOpen)
+      drawChest(chestOpen)
   end
+end
+
+function love.postDraw()
+  love.graphics.setCanvas()
 end
 
 function drawMap()
@@ -125,7 +172,7 @@ function drawMap()
       for blockIndex, block in ipairs(chunk.blocks) do
           if block.blockType then
               if block.blockType == amethyst or block.blockType == forrestite then
-                  love.graphics.setShader(shader)
+                  love.graphics.setShader(oreShader)
               end
               love.graphics.draw(spriteSheet, block.blockType.sprite, block.x, block.y, 0, spriteToBlock, spriteToBlock)
               if block.blockType == amethyst or block.blockType == forrestite then
@@ -134,6 +181,16 @@ function drawMap()
               drawBlockDamage(block)
           end
       end
+  end
+end
+
+function drawPick(x, y)
+  if pick.type == amethystPick or pick.type == forrestitePick then
+      love.graphics.setShader(oreShader)
+  end
+  love.graphics.draw(spriteSheet, currentPickSprite, x - 15, y - 15)
+  if pick.type == amethystPick or pick.type == forrestitePick then
+      love.graphics.setShader()
   end
 end
 
@@ -158,14 +215,10 @@ function drawParticles()
   love.graphics.draw(forrestiteParticleSystem)
 end
 
-function drawPick(x, y)
-  love.graphics.draw(spriteSheet, currentPickSprite, x - 15, y - 15)
-end
-
 function drawInventory()
   local slotMargin = 5
   local slotSize = 40
-  local itemSize = 30
+  local inventoryScale = 2 -- Adjust this scale as needed
 
   for slotIndex, slot in ipairs(inventory) do
     local slotX = slotIndex * slotSize - slotSize + slotMargin * slotIndex
@@ -176,9 +229,13 @@ function drawInventory()
 
     if slot.item then
       love.graphics.setColor(1, 1, 1)
-      local itemX = slotX + (slotSize - itemSize) / 2
-      local itemY = slotY + (slotSize - itemSize) / 2
-      love.graphics.draw(spriteSheet, slot.item.sprite, itemX, itemY, 0, itemSize / 32, itemSize / 32)
+      local quad = slot.item.sprite
+      local _, _, quadWidth, quadHeight = quad:getViewport()
+      local itemWidth = quadWidth * inventoryScale
+      local itemHeight = quadHeight * inventoryScale
+      local itemX = slotX + (slotSize - itemWidth) / 2
+      local itemY = slotY + (slotSize - itemHeight) / 2
+      love.graphics.draw(spriteSheet, quad, itemX, itemY, 0, inventoryScale, inventoryScale)
     end
 
     love.graphics.setColor(0.5, 0.3, 0.1)
@@ -241,7 +298,8 @@ end
 
 -- Update Function
 function love.update(dt)
-  shader:send("time", love.timer.getTime())
+  oreShader:send("time", love.timer.getTime())
+  vignetteShader:send("time", love.timer.getTime()) -- Add this
   updateParticles(dt)
   updatePick(dt)
   updateCamera(dt)
