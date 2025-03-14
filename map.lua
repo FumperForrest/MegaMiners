@@ -14,12 +14,12 @@ chunkHeight = 15
 
 chestSlots = 28
 
-stone = { type = 'mineable', durability = 5, sprite = stoneSprite }
-iron = { type = 'mineable', durability = 10, sprite = ironSprite }
-gold = { type = 'mineable', durability = 25, sprite = goldSprite }
-diamonds = { type = 'mineable', durability = 35, sprite = diamondsSprite }
-amethyst = { type = 'mineable', durability = 50, sprite = amethystSprite }
-forrestite = { type = 'mineable', durability = 100, sprite = forrestiteSprite }
+stone = { type = 'mineable', durability = 5, sprite = stoneSprite, item = stoneItem }
+iron = { type = 'mineable', durability = 10, sprite = ironSprite, item = ironItem }
+gold = { type = 'mineable', durability = 25, sprite = goldSprite, item = goldItem }
+diamonds = { type = 'mineable', durability = 35, sprite = diamondsSprite, item = diamondItem }
+amethyst = { type = 'mineable', durability = 50, sprite = amethystSprite, item = amethystItem }
+forrestite = { type = 'mineable', durability = 100, sprite = forrestiteSprite, item = forrestiteItem }
 
 chest = { type = 'interactable', sprite = chest }
 

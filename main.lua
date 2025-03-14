@@ -40,6 +40,22 @@ function love.load()
   musicSrc:setVolume(0.1)
   musicSrc:play()
 
+  local oreShaderCode = [[
+    extern number time;
+    vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
+        vec4 pixel = Texel(texture, texture_coords);
+        float glow = sin(time * 5.0) * 0.5 + 0.5;
+        if (pixel.r > 0.5 && pixel.b > 0.5 && pixel.g < 0.5) {
+            pixel.rgb += glow * vec3(0.5, 0.0, 0.5); // Amethyst glow
+        } else if (pixel.g > 0.5 && pixel.b < 0.5 && pixel.r < 0.5) {
+            pixel.rgb += glow * vec3(0.0, 1.0, 0.0); // Forrestite glow
+        }
+        return pixel * color;
+    }
+]]
+
+  shader = love.graphics.newShader(oreShaderCode)
+
   fullscreenX = love.graphics.getWidth() - 16
   fullscreenY = 0
 
@@ -80,6 +96,7 @@ end
 -- Draw Functions
 function love.draw()
   cam:attach()
+
   drawMap()
   drawParticles()
   cam:detach()
@@ -96,21 +113,27 @@ end
 
 function drawMap()
   for chunkIndex, chunk in ipairs(chunks) do
-    local camX, camY = cam:position()
-    if math.abs(chunk.x - camX) < renderDistance and math.abs(chunk.y - camY) < renderDistance then
-      table.insert(loadedChunks, chunk)
-    else
-      table.remove(loadedChunks, chunkIndex)
-    end
+      local camX, camY = cam:position()
+      if math.abs(chunk.x - camX) < renderDistance and math.abs(chunk.y - camY) < renderDistance then
+          table.insert(loadedChunks, chunk)
+      else
+          table.remove(loadedChunks, chunkIndex)
+      end
   end
 
   for chunkIndex, chunk in ipairs(loadedChunks) do
-    for blockIndex, block in ipairs(chunk.blocks) do
-      if block.blockType then
-        love.graphics.draw(spriteSheet, block.blockType.sprite, block.x, block.y, 0, spriteToBlock, spriteToBlock)
-        drawBlockDamage(block)
+      for blockIndex, block in ipairs(chunk.blocks) do
+          if block.blockType then
+              if block.blockType == amethyst or block.blockType == forrestite then
+                  love.graphics.setShader(shader)
+              end
+              love.graphics.draw(spriteSheet, block.blockType.sprite, block.x, block.y, 0, spriteToBlock, spriteToBlock)
+              if block.blockType == amethyst or block.blockType == forrestite then
+                  love.graphics.setShader()
+              end
+              drawBlockDamage(block)
+          end
       end
-    end
   end
 end
 
@@ -180,26 +203,29 @@ function drawChest(chest)
   end
 
   for itemIndex, item in ipairs(chest.items) do
-    local itemX = chestMenuX + itemIndex * itemMargin
+    item.x = chestMenuX + itemIndex * itemMargin
+    
     local row = 1
 
     if 0 < itemIndex and itemIndex <= 7 then
-      itemX = chestMenuX + itemMargin + ((itemIndex - 1) * itemSpacing)
+      item.x = chestMenuX + itemMargin + ((itemIndex - 1) * itemSpacing)
       row = 0
     elseif 7 < itemIndex and itemIndex <= 14 then
-      itemX = chestMenuX + ((itemIndex - 1) - 7) * itemSpacing + itemMargin
+      item.x = chestMenuX + ((itemIndex - 1) - 7) * itemSpacing + itemMargin
       row = 1
     elseif 14 < itemIndex and itemIndex <= 21 then
-      itemX = chestMenuX + ((itemIndex - 1) - 14) * itemSpacing + itemMargin
+      item.x = chestMenuX + ((itemIndex - 1) - 14) * itemSpacing + itemMargin
       row = 2
     elseif 21 < itemIndex and itemIndex <= 28 then
-      itemX = chestMenuX + ((itemIndex - 1) - 21) * itemSpacing + itemMargin
+      item.x = chestMenuX + ((itemIndex - 1) - 21) * itemSpacing + itemMargin
       row = 2
     end
 
-    local rowY = row * itemSpacing + itemMargin
-    love.graphics.draw(spriteSheet, item.itemType.sprite, itemX, chestMenuY + rowY, 0, chestMenuScale, chestMenuScale)
-    drawBorderedText(item.amount, itemX, chestMenuY + rowY)
+    rowY = row * itemSpacing + itemMargin
+    item.y = row * itemSpacing + itemMargin + chestMenuY
+    
+    love.graphics.draw(spriteSheet, item.itemType.sprite, item.x, item.y, 0, chestMenuScale, chestMenuScale)
+    drawBorderedText(item.amount, item.x, chestMenuY + rowY)
   end
 end
 
@@ -215,6 +241,7 @@ end
 
 -- Update Function
 function love.update(dt)
+  shader:send("time", love.timer.getTime())
   updateParticles(dt)
   updatePick(dt)
   updateCamera(dt)
@@ -282,6 +309,9 @@ function updatePick(dt)
   end
 end
 
+function updateMenu(dt)
+  --the items need to move with the mouse while it is down and only come off when over and empty or fitting item slot in the inventory. If it is unclicked, it should return to the chest.
+end   
 function updateCamera(dt)
   local moveX, moveY = 0, 0
   if love.keyboard.isDown("right") or love.keyboard.isDown("d") then
@@ -385,12 +415,12 @@ function breakBlock(block, blockIndex, chunk)
   local slotFilled = false
   for slotIndex, slot in ipairs(inventory) do
     if not slotFilled then
-      if slot.item == block.blockType then
+      if slot.item == block.blockType.item then
         slotFilled = true
         slot.amount = slot.amount + 1
       elseif slot.item == nil then
         slotFilled = true
-        slot.item = block.blockType
+        slot.item = block.blockType.item
         slot.amount = slot.amount + 1
       end
     end
