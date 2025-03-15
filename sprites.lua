@@ -26,6 +26,12 @@ forrestitePickIdle = love.graphics.newQuad(192,32,32,32,spriteSheet:getDimension
 forrestitePickSwing = love.graphics.newQuad(224,32,32,32,spriteSheet:getDimensions())
 forrestitePickFinal = love.graphics.newQuad(256,32,32,32,spriteSheet:getDimensions())
 
+dynamite1 = love.graphics.newQuad(288,32,32,32,spriteSheet:getDimensions())
+dynamite2 = love.graphics.newQuad(320,32,32,32,spriteSheet:getDimensions())
+dynamite3 = love.graphics.newQuad(352,32,32,32,spriteSheet:getDimensions())
+
+explosionSprite = love.graphics.newQuad(224,192,64,64,spriteSheet:getDimensions())
+
 break1 = love.graphics.newQuad(0,32,32,32,spriteSheet:getDimensions())
 break2 = love.graphics.newQuad(32,32,32,32,spriteSheet:getDimensions())
 break3 = love.graphics.newQuad(64,32,32,32,spriteSheet:getDimensions())

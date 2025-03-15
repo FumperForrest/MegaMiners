@@ -28,6 +28,15 @@ local loadedChunks = {}
 local renderDistance = 1000
 local inventory = {}
 
+
+local dynamiteThrown = false
+local currentDynamiteSprite = dynamite1
+local dynamiteAnimTimer = 0
+local dynamiteScale = 1
+
+local explosionAnimTimer = 0
+local explosionScale = 1
+
 -- Load Function
 function love.load()
     cam = camera()
@@ -107,6 +116,10 @@ function love.draw()
 
     -- HUD/Overlay elements drawn after shader
     drawPick(pick.x, pick.y)
+
+    drawDynamite(targetX, targetY)
+    drawExplosion(targetX, targetY)
+
     drawInventory()
     love.graphics.draw(spriteSheet, fullscreenIcon, fullscreenX, fullscreenY)
 
@@ -182,6 +195,14 @@ end
 -- Draw Pick
 function drawPick(x, y)
     love.graphics.draw(spriteSheet, currentPickSprite, x - 15, y - 15)
+end
+
+
+-- Draw Dynamite
+function drawDynamite(x,y)
+    if dynamiteThrown then
+        love.graphics.draw(spriteSheet,currentDynamiteSprite, x, y, 0 , dynamiteScale, dynamiteScale)
+    end
 end
 
 -- Draw Block Damage
@@ -293,11 +314,14 @@ end
 
 -- Update Function
 function love.update(dt)
+    worldMouseX, worldMouseY = cam:worldCoords(love.mouse.getX(), love.mouse.getY())
     shader:send("time", love.timer.getTime())
     shader:send("textureSize", { love.graphics.getWidth(), love.graphics.getHeight() })
     updateParticles(dt)
     updatePick(dt)
     updateCamera(dt)
+    updateDynamite(dt)
+    updateExplosion(dt)
 end
 
 -- Update Particles
@@ -363,6 +387,86 @@ function updatePick(dt)
         end
     end
 end
+
+
+-- Update Explosion
+
+function updateExplosion(dt)
+    explosionAnimTimer = explosionAnimTimer + dt * 200
+    if explosionAnimTimer<= 50 then
+        explosionScale = .5
+    elseif explosionAnimTimer <= 70 then
+        explosionScale = 1
+    elseif explosionAnimTimer <= 90 then
+        explosionScale = 3
+    elseif explosionAnimTimer >= 150 then
+        explosion = false
+        explosionAnimTimer = 0
+        explosionScale = 0
+    end
+end
+
+
+-- Kaboom!
+
+function drawExplosion(x,y)
+    if explosion then
+        love.graphics.draw(spriteSheet, explosionSprite, x, y, 0, explosionScale, explosionScale)
+    end
+end
+
+
+
+
+-- Kablamo!
+
+function explodeDynamite()
+    for chunkIndex, chunk in ipairs(loadedChunks) do
+        for blockIndex, block in ipairs(chunk.blocks) do
+            if block.blockType then
+                if checkCollision(block.x, block.y, targetX, targetY, BLOCK_WIDTH, BLOCK_HEIGHT) and block.blockType.type == 'mineable' then
+                    if not particleTriggered then
+                        particleX, particleY = block.x + BLOCK_WIDTH / 2, block.y + BLOCK_HEIGHT / 2
+                        rockParticleSystem:setPosition(particleX, particleY)
+                        rockParticleSystem:emit(1)
+                        particleTriggered = true
+                    end
+                
+                    explosion = true
+                    breakBlock(block, blockIndex, chunk)
+                
+                end
+            end
+        end
+    end
+end 
+
+
+-- Update Dynamite
+function updateDynamite(dt)
+    
+    if dynamiteThrown then
+        dynamiteAnimTimer = dynamiteAnimTimer + dt * 200
+        if dynamiteAnimTimer <= 50 then
+            currentDynamiteSprite = dynamite1
+            dynamiteScale = 10
+        elseif dynamiteAnimTimer <= 70 then
+            currentDynamiteSprite = dynamite2
+            dynamiteScale = 5
+        elseif dynamiteAnimTimer <= 90 then
+            currentDynamiteSprite = dynamite3
+            dynamiteScale = 1
+        elseif dynamiteAnimTimer >= 150 then
+            explodeDynamite()
+            dynamiteThrown = false
+            dynamiteAnimTimer = 0
+        end
+    end
+
+
+end
+
+
 
 -- Update Camera
 function updateCamera(dt)
@@ -437,6 +541,25 @@ function love.keypressed(key)
             pick.type = pickaxes.forrestitePick
         end
         currentPickSprite = pick.type.idle
+
+        if key == 'e' then
+            
+            if not dynamiteThrown and not explosion and canMine then
+
+                for chunkIndex, chunk in ipairs(loadedChunks) do
+                    for blockIndex, block in ipairs(chunk.blocks) do
+                        if block.blockType then
+                            if checkCollision(block.x, block.y, worldMouseX, worldMouseY, BLOCK_WIDTH, BLOCK_HEIGHT) and block.blockType.type == 'mineable' then
+                                targetX, targetY = block.x+10, block.y+10
+                            end
+                        end
+                    end
+                end
+
+                dynamiteThrown = true
+                particleTriggered = false
+            end
+        end
     end
 end
 
