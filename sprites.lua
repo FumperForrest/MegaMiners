@@ -50,6 +50,12 @@ penisItemSprite = love.graphics.newQuad(160,112,16,16,spriteSheet:getDimensions(
 chest = love.graphics.newQuad(192,64,32,32,spriteSheet:getDimensions())
 chestMenu = love.graphics.newQuad(0,128,224,128,spriteSheet:getDimensions())
 
+parallax1 = love.graphics.newImage('Assets/parallax1.png')
+parallax2 = love.graphics.newImage('Assets/parallax2.png')
+parallax3 = love.graphics.newImage('Assets/parallax3.png')
+parallax4 = love.graphics.newImage('Assets/parallax4.png')
+parallax5 = love.graphics.newImage('Assets/parallax5.png')
+
 rockParticle = love.graphics.newQuad(0,96,16,16,spriteSheet:getDimensions())
 ironParticle = love.graphics.newQuad(16,96,16,16,spriteSheet:getDimensions())
 goldParticle = love.graphics.newQuad(32,96,16,16,spriteSheet:getDimensions())

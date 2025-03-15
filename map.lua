@@ -1,95 +1,109 @@
 require("items")
 
-blockWidth = 50
-blockHeight = 50
+-- Constants
+BLOCK_WIDTH = 50
+BLOCK_HEIGHT = 50
+CHUNK_WIDTH = 15
+CHUNK_HEIGHT = 15
+local CHEST_SLOTS = 28
 
-blocks = {}
+-- Block Types
+blockTypes = {
+    stone = { type = 'mineable', durability = 5, sprite = stoneSprite, item = stoneItem },
+    iron = { type = 'mineable', durability = 10, sprite = ironSprite, item = ironItem },
+    gold = { type = 'mineable', durability = 25, sprite = goldSprite, item = goldItem },
+    diamonds = { type = 'mineable', durability = 35, sprite = diamondsSprite, item = diamondItem },
+    amethyst = { type = 'mineable', durability = 50, sprite = amethystSprite, item = amethystItem },
+    forrestite = { type = 'mineable', durability = 100, sprite = forrestiteSprite, item = forrestiteItem },
+    chest = { type = 'interactable', sprite = chest }
+}
 
-blockTypes = {}  -- Ensure this is defined before adding types
+-- Mineable Blocks
+local mineables = { blockTypes.stone, blockTypes.iron, blockTypes.gold, blockTypes.diamonds, blockTypes.amethyst, blockTypes.forrestite }
 
+-- Chunks and Blocks
 chunks = {}
+chunksX = 0
+chunksY = 0
 
-chunkWidth = 15
-chunkHeight = 15
+-- Generate a single block
+local function generateBlock(chunkX, chunkY, widthIndex, heightIndex)
+    local block = {}
+    local blockType
 
-chestSlots = 28
+    -- Randomly decide if this block is a chest
+    if math.random(1, 100) == 1 then
+        blockType = blockTypes.chest
+        block = {
+            blockType = blockType,
+            x = chunkX * CHUNK_WIDTH * BLOCK_WIDTH + (widthIndex - 1) * BLOCK_WIDTH,
+            y = chunkY * CHUNK_HEIGHT * BLOCK_HEIGHT + (heightIndex - 1) * BLOCK_HEIGHT,
+            items = {},
+            slotsUsed = 0
+        }
+        itemizeChest(block, stoneItem, 5)
+        itemizeChest(block, ironItem, 3)
+        itemizeChest(block, goldItem, 3)
+        itemizeChest(block, diamondItem, 5)
+        itemizeChest(block, amethystItem, 1)
+        itemizeChest(block, forrestiteItem, 1)
+        itemizeChest(block, carrotItem, 3)
+        itemizeChest(block, breadItem, 5)
+    -- Randomly decide if this block is a mineable resource
+    elseif math.random(1, 10) == 1 then
+        blockType = mineables[math.random(1, #mineables)]
+        block = {
+            blockType = blockType,
+            x = chunkX * CHUNK_WIDTH * BLOCK_WIDTH + (widthIndex - 1) * BLOCK_WIDTH,
+            y = chunkY * CHUNK_HEIGHT * BLOCK_HEIGHT + (heightIndex - 1) * BLOCK_HEIGHT,
+            health = blockType.durability
+        }
+    -- Default to stone
+    else
+        blockType = blockTypes.stone
+        block = {
+            blockType = blockType,
+            x = chunkX * CHUNK_WIDTH * BLOCK_WIDTH + (widthIndex - 1) * BLOCK_WIDTH,
+            y = chunkY * CHUNK_HEIGHT * BLOCK_HEIGHT + (heightIndex - 1) * BLOCK_HEIGHT,
+            health = blockType.durability
+        }
+    end
 
-stone = { type = 'mineable', durability = 5, sprite = stoneSprite, item = stoneItem }
-iron = { type = 'mineable', durability = 10, sprite = ironSprite, item = ironItem }
-gold = { type = 'mineable', durability = 25, sprite = goldSprite, item = goldItem }
-diamonds = { type = 'mineable', durability = 35, sprite = diamondsSprite, item = diamondItem }
-amethyst = { type = 'mineable', durability = 50, sprite = amethystSprite, item = amethystItem }
-forrestite = { type = 'mineable', durability = 100, sprite = forrestiteSprite, item = forrestiteItem }
-
-chest = { type = 'interactable', sprite = chest }
-
-table.insert(blockTypes, stone)
-table.insert(blockTypes, iron)
-table.insert(blockTypes, gold)
-table.insert(blockTypes, diamonds)
-table.insert(blockTypes, amethyst)
-table.insert(blockTypes, forrestite)
-table.insert(blockTypes, chest)
-
-local mineables = {stone, iron, gold, diamonds, amethyst, forrestite}
-
-function generateMap(chunksPerRow, chunksPerColumn)
-  for chunkX = 0, chunksPerRow - 1 do
-      for chunkY = 0, chunksPerColumn - 1 do
-          local chunk = {
-              blocks = {},  -- Store blocks inside the chunk
-              x = (chunkX * chunkWidth * blockWidth) + (chunkWidth * blockWidth) / 2,
-              y = (chunkY * chunkHeight * blockHeight) + (chunkHeight * blockHeight) / 2
-          }
-
-          for widthIndex = 1, chunkWidth do
-              for heightIndex = 1, chunkHeight do
-                local block = {}
-
-                if math.random(1, 100) == 1 then
-                    blockType = chest
-                    block = {
-                        blockType = blockType,
-                        x = chunkX * chunkWidth * blockWidth + (widthIndex - 1) * blockWidth,
-                        y = chunkY * chunkHeight * blockHeight + (heightIndex - 1) * blockHeight,
-                        items = {},
-                        slotsUsed = 0,
-                    }
-                    itemizeChest(block, stoneItem, 5)
-                    itemizeChest(block, ironItem, 3)
-                    itemizeChest(block, goldItem, 3)
-                    itemizeChest(block, diamondItem, 5)
-                    itemizeChest(block, amethystItem, 1)
-                    itemizeChest(block, forrestiteItem, 1)
-                    itemizeChest(block, carrotItem, 3)
-                    itemizeChest(block, breadItem, 5)
-                elseif math.random(1, 10) == 1 then
-                    blockType = blockTypes[math.random(1, #mineables)]
-                    block = {
-                        blockType = blockType,
-                        x = chunkX * chunkWidth * blockWidth + (widthIndex - 1) * blockWidth,
-                        y = chunkY * chunkHeight * blockHeight + (heightIndex - 1) * blockHeight,
-                        health = blockType.durability
-                    }
-                else
-                    blockType = stone
-                    block = {
-                        blockType = blockType,
-                        x = chunkX * chunkWidth * blockWidth + (widthIndex - 1) * blockWidth,
-                        y = chunkY * chunkHeight * blockHeight + (heightIndex - 1) * blockHeight,
-                        health = blockType.durability
-                    }
-                end
-
-                table.insert(chunk.blocks, block)  -- Insert block into the chunk
-              end
-          end
-
-          table.insert(chunks, chunk)  -- Insert the chunk into the chunks table
-      end
-  end
+    return block
 end
 
+-- Generate a single chunk
+local function generateChunk(chunkX, chunkY)
+    local chunk = {
+        blocks = {},
+        x = (chunkX * CHUNK_WIDTH * BLOCK_WIDTH) + (CHUNK_WIDTH * BLOCK_WIDTH) / 2,
+        y = (chunkY * CHUNK_HEIGHT * BLOCK_HEIGHT) + (CHUNK_HEIGHT * BLOCK_HEIGHT) / 2
+    }
+
+    for widthIndex = 1, CHUNK_WIDTH do
+        for heightIndex = 1, CHUNK_HEIGHT do
+            local block = generateBlock(chunkX, chunkY, widthIndex, heightIndex)
+            table.insert(chunk.blocks, block)
+        end
+    end
+
+    return chunk
+end
+
+-- Generate the entire map
+function generateMap(chunksPerRow, chunksPerColumn)
+    for chunkX = 0, chunksPerRow - 1 do
+        for chunkY = 0, chunksPerColumn - 1 do
+            local chunk = generateChunk(chunkX, chunkY)
+            table.insert(chunks, chunk)
+
+            chunksX = chunksPerColumn
+            chunksY = chunksPerRow
+        end
+    end
+end
+
+-- Add items to a chest
 function itemizeChest(chest, itemType, amount)
     local itemFound = false
 
