@@ -6,35 +6,51 @@ flintPickIdle = love.graphics.newQuad(0,0,32,32,spriteSheet:getDimensions())
 flintPickSwing = love.graphics.newQuad(32,0,32,32,spriteSheet:getDimensions())
 flintPickFinal = love.graphics.newQuad(64,0,32,32,spriteSheet:getDimensions())
 
+flintPickFrames = {flintPickIdle, flintPickSwing, flintPickFinal}
+
 ironPickIdle = love.graphics.newQuad(96,0,32,32,spriteSheet:getDimensions())
 ironPickSwing = love.graphics.newQuad(128,0,32,32,spriteSheet:getDimensions())
 ironPickFinal = love.graphics.newQuad(160,0,32,32,spriteSheet:getDimensions())
+
+ironPickFrames = {ironPickIdle, ironPickSwing, ironPickFinal}
 
 goldPickIdle = love.graphics.newQuad(192,0,32,32,spriteSheet:getDimensions())
 goldPickSwing = love.graphics.newQuad(224,0,32,32,spriteSheet:getDimensions())
 goldPickFinal = love.graphics.newQuad(256,0,32,32,spriteSheet:getDimensions())
 
+goldPickFrames = {goldPickIdle, goldPickSwing, goldPickFinal}
+
 diamondPickIdle = love.graphics.newQuad(288,0,32,32,spriteSheet:getDimensions())
 diamondPickSwing = love.graphics.newQuad(320,0,32,32,spriteSheet:getDimensions())
 diamondPickFinal = love.graphics.newQuad(352,0,32,32,spriteSheet:getDimensions())
+
+diamondPickFrames = {diamondPickIdle, diamondPickSwing, diamondPickFinal}
 
 amethystPickIdle = love.graphics.newQuad(96,32,32,32,spriteSheet:getDimensions())
 amethystPickSwing = love.graphics.newQuad(128,32,32,32,spriteSheet:getDimensions())
 amethystPickFinal = love.graphics.newQuad(160,32,32,32,spriteSheet:getDimensions())
 
+amethystPickFrames = {amethystPickIdle, amethystPickSwing, amethystPickFinal}
+
 forrestitePickIdle = love.graphics.newQuad(192,32,32,32,spriteSheet:getDimensions())
 forrestitePickSwing = love.graphics.newQuad(224,32,32,32,spriteSheet:getDimensions())
 forrestitePickFinal = love.graphics.newQuad(256,32,32,32,spriteSheet:getDimensions())
 
+forrestitePickFrames = {forrestitePickIdle, forrestitePickSwing, forrestitePickFinal}
+
 dynamite1 = love.graphics.newQuad(288,32,32,32,spriteSheet:getDimensions())
 dynamite2 = love.graphics.newQuad(320,32,32,32,spriteSheet:getDimensions())
 dynamite3 = love.graphics.newQuad(352,32,32,32,spriteSheet:getDimensions())
+
+dynamiteFrames = {dynamite1, dynamite2, dynamite3}
 
 explosionSprite = love.graphics.newQuad(224,192,64,64,spriteSheet:getDimensions())
 
 break1 = love.graphics.newQuad(0,32,32,32,spriteSheet:getDimensions())
 break2 = love.graphics.newQuad(32,32,32,32,spriteSheet:getDimensions())
 break3 = love.graphics.newQuad(64,32,32,32,spriteSheet:getDimensions())
+
+breakFrames = {break1, break2, break3}
 
 stoneSprite = love.graphics.newQuad(0,64,32,32,spriteSheet:getDimensions())
 ironSprite = love.graphics.newQuad(32,64,32,32,spriteSheet:getDimensions())
@@ -79,6 +95,8 @@ minerWalk5 = love.graphics.newQuad(128,0,32,32,minerSpriteSheet:getDimensions())
 minerWalk6 = love.graphics.newQuad(160,0,32,32,minerSpriteSheet:getDimensions())
 minerWalk7 = love.graphics.newQuad(192,0,32,32,minerSpriteSheet:getDimensions())
 minerWalk8 = love.graphics.newQuad(224,0,32,32,minerSpriteSheet:getDimensions())
+
+minerWalkFrames = {minerWalk1, minerWalk2, minerWalk3, minerWalk4, minerWalk5, minerWalk6, minerWalk7, minerWalk8}
 
 minerDoorSprite = love.graphics.newQuad(224,64,32,32,spriteSheet:getDimensions())
 

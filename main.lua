@@ -5,7 +5,7 @@ require("particles")
 require("items")
 
 -- Global Variables
-local camera = require 'libraries/camera'
+local camera = require("libraries/camera")
 local cam
 local camSpeed = 350
 local miningSrc, breakSrc, musicSrc
@@ -13,7 +13,6 @@ local spriteToBlock = 50 / 32
 local chestOpen = nil
 local fullscreenX, fullscreenY
 local particleTriggered = false
-local particleX, particleY = 0, 0
 local pickaxes = {}
 local pick
 local cx, cy, cw, ch
@@ -21,31 +20,29 @@ local exitButtonSize = 16
 local chestMenuScale = 3
 local chestMenuX, chestMenuY
 local canMine = true
-local currentPickSprite
-local pickAnimTimer = 0
+local currentPick = pickaxes.flintPick
+local currentPickFrame = 1
 local pickSwinging = false
 local loadedChunks = {}
 local renderDistance = 1000
 local inventory = {}
 
-
 local dynamiteThrown = false
-local currentDynamiteSprite = dynamite1
-local dynamiteAnimTimer = 0
+local currentDynamiteFrame = 1
 local dynamiteScale = 1
 
-local explosionAnimTimer = 0
 local explosionScale = 1
+local explosionTimer = 0
 
 -- Load Function
 function love.load()
     cam = camera()
-    love.graphics.setDefaultFilter('nearest', 'nearest')
+    love.graphics.setDefaultFilter("nearest", "nearest")
 
     -- Load audio sources
-    miningSrc = love.audio.newSource('Assets/mining.wav', 'stream')
-    breakSrc = love.audio.newSource('Assets/break.wav', 'stream')
-    musicSrc = love.audio.newSource('Assets/music.mp3', 'stream')
+    miningSrc = love.audio.newSource("Assets/mining.wav", "stream")
+    breakSrc = love.audio.newSource("Assets/break.wav", "stream")
+    musicSrc = love.audio.newSource("Assets/music.mp3", "stream")
     musicSrc:setLooping(true)
     musicSrc:setVolume(0.1)
     musicSrc:play()
@@ -75,15 +72,55 @@ end
 -- Initialize Pickaxes
 function initializePickaxes()
     pickaxes = {
-        flintPick = { idle = flintPickIdle, swing = flintPickSwing, final = flintPickFinal, damage = 1 },
-        ironPick = { idle = ironPickIdle, swing = ironPickSwing, final = ironPickFinal, damage = 2.5 },
-        goldPick = { idle = goldPickIdle, swing = goldPickSwing, final = goldPickFinal, damage = 5 },
-        diamondPick = { idle = diamondPickIdle, swing = diamondPickSwing, final = diamondPickFinal, damage = 7.5 },
-        amethystPick = { idle = amethystPickIdle, swing = amethystPickSwing, final = amethystPickFinal, damage = 10 },
-        forrestitePick = { idle = forrestitePickIdle, swing = forrestitePickSwing, final = forrestitePickFinal, damage = 15 }
+        flintPick = {
+            idle = flintPickIdle,
+            swing = flintPickSwing,
+            final = flintPickFinal,
+            damage = 1,
+            frames = flintPickFrames
+        },
+        ironPick = {
+            idle = ironPickIdle,
+            swing = ironPickSwing,
+            final = ironPickFinal,
+            damage = 2.5,
+            frames = ironPickFrames
+        },
+        goldPick = {
+            idle = goldPickIdle,
+            swing = goldPickSwing,
+            final = goldPickFinal,
+            damage = 5,
+            frames = goldPickFrames
+        },
+        diamondPick = {
+            idle = diamondPickIdle,
+            swing = diamondPickSwing,
+            final = diamondPickFinal,
+            damage = 7.5,
+            frames = diamondPickFrames
+        },
+        amethystPick = {
+            idle = amethystPickIdle,
+            swing = amethystPickSwing,
+            final = amethystPickFinal,
+            damage = 10,
+            frames = amethystPickFrames
+        },
+        forrestitePick = {
+            idle = forrestitePickIdle,
+            swing = forrestitePickSwing,
+            final = forrestitePickFinal,
+            damage = 15,
+            frames = forrestitePickFrames
+        }
     }
 
-    pick = { type = pickaxes.flintPick, x = 100, y = 100 }
+    pick = {
+        type = pickaxes.flintPick,
+        x = 100,
+        y = 100
+    }
     currentPickSprite = pick.type.idle
 end
 
@@ -97,7 +134,10 @@ end
 -- Initialize Inventory
 function initializeInventory(number)
     for i = 1, number do
-        local slot = { item = nil, amount = 0 }
+        local slot = {
+            item = nil,
+            amount = 0
+        }
         table.insert(inventory, slot)
     end
 end
@@ -136,44 +176,40 @@ function love.draw()
     drawBorderedText(love.timer.getFPS(), 0, 0)
 end
 
--- Post Draw Function
-function love.postDraw()
-    love.graphics.setCanvas()
-end
-
 -- Draw Map
 function drawMap()
-  local camX, camY = cam:position()
+    local camX, camY = cam:position()
 
-  -- Clear the loadedChunks table at the start of each frame
-  loadedChunks = {}
+    -- Clear the loadedChunks table at the start of each frame
+    loadedChunks = {}
 
-  -- Load chunks within the render distance
-  for chunkIndex, chunk in ipairs(chunks) do
-      local chunkCenterX = chunk.x
-      local chunkCenterY = chunk.y
+    -- Load chunks within the render distance
+    for chunkIndex, chunk in ipairs(chunks) do
+        local chunkCenterX = chunk.x
+        local chunkCenterY = chunk.y
 
-      -- Check if the chunk is within the render distance
-      if math.abs(chunkCenterX - camX) < renderDistance and math.abs(chunkCenterY - camY) < renderDistance then
-          table.insert(loadedChunks, chunk)
-      end
-  end
+        -- Check if the chunk is within the render distance
+        if math.abs(chunkCenterX - camX) < renderDistance and math.abs(chunkCenterY - camY) < renderDistance then
+            table.insert(loadedChunks, chunk)
+        end
+    end
 
-  -- Render loaded chunks
-  for chunkIndex, chunk in ipairs(loadedChunks) do
-      for blockIndex, block in ipairs(chunk.blocks) do
-          if block.blockType then
-              love.graphics.draw(spriteSheet, block.blockType.sprite, block.x, block.y, 0, spriteToBlock, spriteToBlock)
-              drawBlockDamage(block)
-          end
-      end
-  end
+    -- Render loaded chunks
+    for chunkIndex, chunk in ipairs(loadedChunks) do
+        for blockIndex, block in ipairs(chunk.blocks) do
+            if block.blockType then
+                love.graphics.draw(spriteSheet, block.blockType.sprite, block.x, block.y, 0, spriteToBlock,
+                    spriteToBlock)
+                drawBlockDamage(block)
+            end
+        end
+    end
 end
 
 -- Draw Background
 function drawBackground()
-    local parallaxSpeeds = { 0.1, 0.2, 0.4, 0.7, 1.2 }
-    local parallaxImages = { parallax5, parallax4, parallax3, parallax2, parallax1 }
+    local parallaxSpeeds = {0.1, 0.2, 0.4, 0.7, 1.2}
+    local parallaxImages = {parallax5, parallax4, parallax3, parallax2, parallax1}
 
     for i, image in ipairs(parallaxImages) do
         local speed = parallaxSpeeds[i]
@@ -194,23 +230,25 @@ end
 
 -- Draw Pick
 function drawPick(x, y)
-    love.graphics.draw(spriteSheet, currentPickSprite, x - 15, y - 15)
+    love.graphics.draw(spriteSheet, pick.type.frames[math.floor(currentPickFrame)], x - 15, y - 15)
 end
 
-
 -- Draw Dynamite
-function drawDynamite(x,y)
+function drawDynamite(x, y)
     if dynamiteThrown then
-        love.graphics.draw(spriteSheet,currentDynamiteSprite, x, y, 0 , dynamiteScale, dynamiteScale)
+        love.graphics.draw(spriteSheet, dynamiteFrames[math.floor(currentDynamiteFrame)], x, y, 0, dynamiteScale,
+            dynamiteScale)
     end
 end
 
 -- Draw Block Damage
 function drawBlockDamage(block)
-    if block.blockType.type == 'mineable' then
-        if block.health < (9.9 / 10) * block.blockType.durability and block.health >= (6.5 / 10) * block.blockType.durability then
+    if block.blockType.type == "mineable" then
+        if block.health < (9.9 / 10) * block.blockType.durability and block.health >= (6.5 / 10) *
+            block.blockType.durability then
             love.graphics.draw(spriteSheet, break1, block.x, block.y, 0, spriteToBlock, spriteToBlock)
-        elseif block.health < (6.5 / 10) * block.blockType.durability and block.health >= (3 / 10) * block.blockType.durability then
+        elseif block.health < (6.5 / 10) * block.blockType.durability and block.health >= (3 / 10) *
+            block.blockType.durability then
             love.graphics.draw(spriteSheet, break2, block.x, block.y, 0, spriteToBlock, spriteToBlock)
         elseif block.health < (3 / 10) * block.blockType.durability and block.health >= 0 then
             love.graphics.draw(spriteSheet, break3, block.x, block.y, 0, spriteToBlock, spriteToBlock)
@@ -239,7 +277,7 @@ function drawInventory()
         local slotY = love.graphics.getHeight() - slotSize - slotMargin
 
         love.graphics.setColor(0.7, 0.5, 0.3)
-        love.graphics.rectangle('fill', slotX, slotY, slotSize, slotSize)
+        love.graphics.rectangle("fill", slotX, slotY, slotSize, slotSize)
 
         if slot.item then
             love.graphics.setColor(1, 1, 1)
@@ -254,7 +292,7 @@ function drawInventory()
 
         love.graphics.setColor(0.5, 0.3, 0.1)
         love.graphics.setLineWidth(3)
-        love.graphics.rectangle('line', slotX, slotY, slotSize, slotSize)
+        love.graphics.rectangle("line", slotX, slotY, slotSize, slotSize)
         drawBorderedText(slot.amount, slotX, slotY)
     end
 end
@@ -267,7 +305,8 @@ function drawChest(chest)
     local chestRows = 4
 
     love.graphics.draw(spriteSheet, chestMenu, chestMenuX, chestMenuY, 0, chestMenuScale, chestMenuScale)
-    love.graphics.draw(spriteSheet, exitIcon, chestMenuX - exitButtonSize, chestMenuY - exitButtonSize, 0, chestMenuScale, chestMenuScale)
+    love.graphics.draw(spriteSheet, exitIcon, chestMenuX - exitButtonSize, chestMenuY - exitButtonSize, 0,
+        chestMenuScale, chestMenuScale)
 
     if not chest then
         print("Error: chest is nil")
@@ -316,7 +355,7 @@ end
 function love.update(dt)
     worldMouseX, worldMouseY = cam:worldCoords(love.mouse.getX(), love.mouse.getY())
     shader:send("time", love.timer.getTime())
-    shader:send("textureSize", { love.graphics.getWidth(), love.graphics.getHeight() })
+    shader:send("textureSize", {love.graphics.getWidth(), love.graphics.getHeight()})
     updateParticles(dt)
     updatePick(dt)
     updateCamera(dt)
@@ -347,9 +386,10 @@ function updatePick(dt)
             for chunkIndex, chunk in ipairs(loadedChunks) do
                 for blockIndex, block in ipairs(chunk.blocks) do
                     if block.blockType then
-                        if checkCollision(block.x, block.y, worldPickX, worldPickY, BLOCK_WIDTH, BLOCK_HEIGHT) and block.blockType.type == 'mineable' then
+                        if checkCollision(block.x, block.y, worldPickX, worldPickY, BLOCK_WIDTH, BLOCK_HEIGHT) and
+                            block.blockType.type == "mineable" then
                             if not particleTriggered then
-                                particleX, particleY = block.x + BLOCK_WIDTH / 2, block.y + BLOCK_HEIGHT / 2
+                                local particleX, particleY = block.x + BLOCK_WIDTH / 2, block.y + BLOCK_HEIGHT / 2
                                 rockParticleSystem:setPosition(particleX, particleY)
                                 rockParticleSystem:emit(1)
                                 particleTriggered = true
@@ -373,100 +413,102 @@ function updatePick(dt)
     end
 
     if pickSwinging then
-        pickAnimTimer = pickAnimTimer + dt * 200
-        if pickAnimTimer <= 20 then
-            currentPickSprite = pick.type.idle
-        elseif pickAnimTimer <= 40 then
-            currentPickSprite = pick.type.swing
-        elseif pickAnimTimer <= 60 then
-            currentPickSprite = pick.type.final
-        else
+        currentPickFrame = currentPickFrame + dt * 10
+
+        if currentPickFrame > 4 then
             pickSwinging = false
-            pickAnimTimer = 0
-            currentPickSprite = pick.type.idle
+            currentPickFrame = 1
         end
     end
 end
 
-
--- Update Explosion
-
-function updateExplosion(dt)
-    explosionAnimTimer = explosionAnimTimer + dt * 200
-    if explosionAnimTimer<= 50 then
-        explosionScale = .5
-    elseif explosionAnimTimer <= 70 then
-        explosionScale = 1
-    elseif explosionAnimTimer <= 90 then
-        explosionScale = 3
-    elseif explosionAnimTimer >= 150 then
-        explosion = false
-        explosionAnimTimer = 0
-        explosionScale = 0
-    end
-end
-
-
 -- Kaboom!
-
-function drawExplosion(x,y)
+function drawExplosion(x, y)
     if explosion then
-        love.graphics.draw(spriteSheet, explosionSprite, x, y, 0, explosionScale, explosionScale)
+        -- Get explosion sprite dimensions
+        local ex, ey, ew, eh = explosionSprite:getViewport()
+        
+        -- Calculate centered position
+        local drawX = x + BLOCK_WIDTH/2 - (ew * explosionScale) / 2
+        local drawY = y + BLOCK_HEIGHT/2 - (eh * explosionScale) / 2
+        
+        love.graphics.draw(
+            spriteSheet,
+            explosionSprite,
+            drawX,  -- Already centered via math above
+            drawY,
+            0,
+            explosionScale,
+            explosionScale
+        )
     end
 end
-
-
-
 
 -- Kablamo!
-
 function explodeDynamite()
-    for chunkIndex, chunk in ipairs(loadedChunks) do
-        for blockIndex, block in ipairs(chunk.blocks) do
-            if block.blockType then
-                if checkCollision(block.x, block.y, targetX, targetY, BLOCK_WIDTH, BLOCK_HEIGHT) and block.blockType.type == 'mineable' then
-                    if not particleTriggered then
-                        particleX, particleY = block.x + BLOCK_WIDTH / 2, block.y + BLOCK_HEIGHT / 2
-                        rockParticleSystem:setPosition(particleX, particleY)
-                        rockParticleSystem:emit(1)
-                        particleTriggered = true
-                    end
-                
-                    explosion = true
-                    breakBlock(block, blockIndex, chunk)
-                
+    -- Find the target block's grid position
+    local targetGridX = math.floor(targetX / BLOCK_WIDTH) * BLOCK_WIDTH
+    local targetGridY = math.floor(targetY / BLOCK_HEIGHT) * BLOCK_HEIGHT
+
+    -- Break the target block and adjacent blocks
+    local offsets = {
+        {0, 0},          -- Center (target block)
+        {-BLOCK_WIDTH, 0}, {BLOCK_WIDTH, 0},  -- Left/Right
+        {0, -BLOCK_HEIGHT}, {0, BLOCK_HEIGHT} -- Up/Down
+    }
+
+    for _, offset in ipairs(offsets) do
+        local checkX = targetGridX + offset[1]
+        local checkY = targetGridY + offset[2]
+
+        -- Check all loaded chunks for a block at (checkX, checkY)
+        for _, chunk in ipairs(loadedChunks) do
+            for i = #chunk.blocks, 1, -1 do -- Iterate backwards to safely remove
+                local block = chunk.blocks[i]
+                if block.x == checkX and block.y == checkY then
+                    breakBlock(block, i, chunk)
+                    break -- No need to check further
                 end
             end
         end
     end
-end 
 
+    explosion = true
+end
 
 -- Update Dynamite
 function updateDynamite(dt)
-    
     if dynamiteThrown then
-        dynamiteAnimTimer = dynamiteAnimTimer + dt * 200
-        if dynamiteAnimTimer <= 50 then
-            currentDynamiteSprite = dynamite1
+        currentDynamiteFrame = currentDynamiteFrame + dt * 5
+        if currentDynamiteFrame <= 2 then
             dynamiteScale = 10
-        elseif dynamiteAnimTimer <= 70 then
-            currentDynamiteSprite = dynamite2
+        elseif currentDynamiteFrame <= 3 then
             dynamiteScale = 5
-        elseif dynamiteAnimTimer <= 90 then
-            currentDynamiteSprite = dynamite3
+        elseif currentDynamiteFrame <= 4 then
             dynamiteScale = 1
-        elseif dynamiteAnimTimer >= 150 then
+        else
+            currentDynamiteFrame = 1
             explodeDynamite()
             dynamiteThrown = false
-            dynamiteAnimTimer = 0
         end
     end
-
-
 end
 
-
+function updateExplosion(dt)
+    if explosion then
+        explosionTimer = explosionTimer + dt * 200
+        if explosionTimer <= 50 then
+            explosionScale = 0.1
+        elseif explosionTimer <= 70 then
+            explosionScale = 0.5
+        elseif explosionTimer <= 90 then
+            explosionScale = 3
+        elseif explosionTimer >= 150 then
+            explosion = false
+            explosionTimer = 0
+        end
+    end
+end
 
 -- Update Camera
 function updateCamera(dt)
@@ -476,24 +518,24 @@ function updateCamera(dt)
     local worldWidth, worldHeight = chunksX * (CHUNK_WIDTH * BLOCK_WIDTH), chunksY * (CHUNK_HEIGHT * BLOCK_HEIGHT)
 
     if love.keyboard.isDown("right") or love.keyboard.isDown("d") then
-      if camX + screenWidth / 2 < worldWidth then
-        moveX = moveX + camSpeed * dt
-      end
+        if camX + screenWidth / 2 < worldWidth then
+            moveX = moveX + camSpeed * dt
+        end
     end
     if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
-      if camX - screenWidth / 2 > 0 then
-        moveX = moveX - camSpeed * dt
-      end
+        if camX - screenWidth / 2 > 0 then
+            moveX = moveX - camSpeed * dt
+        end
     end
     if love.keyboard.isDown("down") or love.keyboard.isDown("s") then
-      if camY + screenHeight / 2 < worldHeight then
-        moveY = moveY + camSpeed * dt
-      end
+        if camY + screenHeight / 2 < worldHeight then
+            moveY = moveY + camSpeed * dt
+        end
     end
     if love.keyboard.isDown("up") or love.keyboard.isDown("w") then
-      if camY - screenHeight / 2 > 0 then
-        moveY = moveY - camSpeed * dt
-      end
+        if camY - screenHeight / 2 > 0 then
+            moveY = moveY - camSpeed * dt
+        end
     end
     cam:move(moveX, moveY)
 end
@@ -527,37 +569,36 @@ end
 -- Handle Key Presses
 function love.keypressed(key)
     if not pickSwinging then
-        if key == '1' then
+        if key == "1" then
             pick.type = pickaxes.flintPick
-        elseif key == '2' then
+        elseif key == "2" then
             pick.type = pickaxes.ironPick
-        elseif key == '3' then
+        elseif key == "3" then
             pick.type = pickaxes.goldPick
-        elseif key == '4' then
+        elseif key == "4" then
             pick.type = pickaxes.diamondPick
-        elseif key == '5' then
+        elseif key == "5" then
             pick.type = pickaxes.amethystPick
-        elseif key == '6' then
+        elseif key == "6" then
             pick.type = pickaxes.forrestitePick
         end
         currentPickSprite = pick.type.idle
 
-        if key == 'e' then
-            
+        if key == "e" then
             if not dynamiteThrown and not explosion and canMine then
-
                 for chunkIndex, chunk in ipairs(loadedChunks) do
                     for blockIndex, block in ipairs(chunk.blocks) do
                         if block.blockType then
-                            if checkCollision(block.x, block.y, worldMouseX, worldMouseY, BLOCK_WIDTH, BLOCK_HEIGHT) and block.blockType.type == 'mineable' then
-                                targetX, targetY = block.x+10, block.y+10
+                            if checkCollision(block.x, block.y, worldMouseX, worldMouseY, BLOCK_WIDTH, BLOCK_HEIGHT) and
+                                block.blockType.type == "mineable" then
+                                dynamiteThrown = true
+                                particleTriggered = false
+
+                                targetX, targetY = block.x + 10, block.y + 10
                             end
                         end
                     end
                 end
-
-                dynamiteThrown = true
-                particleTriggered = false
             end
         end
     end
@@ -573,45 +614,50 @@ function toggleFullscreen()
     if love.window.getFullscreen() then
         love.window.setFullscreen(false)
     else
-        love.window.setFullscreen(true, 'exclusive')
+        love.window.setFullscreen(true, "exclusive")
     end
 end
 
 -- Break Block
 function breakBlock(block, blockIndex, chunk)
-    table.remove(chunk.blocks, blockIndex)
-    breakSrc:play()
-    miningSrc:stop()
-    rockParticleSystem:setPosition(particleX, particleY)
-    rockParticleSystem:emit(5)
+    if block.blockType.type == "mineable" then
+        table.remove(chunk.blocks, blockIndex)
+        breakSrc:play()
+        miningSrc:stop()
 
-    if block.blockType == blockTypes.iron then
-        ironParticleSystem:setPosition(particleX, particleY)
-        ironParticleSystem:emit(3)
-    elseif block.blockType == blockTypes.gold then
-        goldParticleSystem:setPosition(particleX, particleY)
-        goldParticleSystem:emit(3)
-    elseif block.blockType == blockTypes.diamonds then
-        diamondParticleSystem:setPosition(particleX, particleY)
-        diamondParticleSystem:emit(3)
-    elseif block.blockType == blockTypes.amethyst then
-        amethystParticleSystem:setPosition(particleX, particleY)
-        amethystParticleSystem:emit(3)
-    elseif block.blockType == blockTypes.forrestite then
-        forrestiteParticleSystem:setPosition(particleX, particleY)
-        forrestiteParticleSystem:emit(3)
-    end
+        local particleX, particleY = block.x + BLOCK_WIDTH / 2, block.y + BLOCK_HEIGHT / 2
 
-    local slotFilled = false
-    for slotIndex, slot in ipairs(inventory) do
-        if not slotFilled then
-            if slot.item == block.blockType.item then
-                slotFilled = true
-                slot.amount = slot.amount + 1
-            elseif slot.item == nil then
-                slotFilled = true
-                slot.item = block.blockType.item
-                slot.amount = slot.amount + 1
+        rockParticleSystem:setPosition(particleX, particleY)
+        rockParticleSystem:emit(5)
+
+        if block.blockType == blockTypes.iron then
+            ironParticleSystem:setPosition(particleX, particleY)
+            ironParticleSystem:emit(3)
+        elseif block.blockType == blockTypes.gold then
+            goldParticleSystem:setPosition(particleX, particleY)
+            goldParticleSystem:emit(3)
+        elseif block.blockType == blockTypes.diamonds then
+            diamondParticleSystem:setPosition(particleX, particleY)
+            diamondParticleSystem:emit(3)
+        elseif block.blockType == blockTypes.amethyst then
+            amethystParticleSystem:setPosition(particleX, particleY)
+            amethystParticleSystem:emit(3)
+        elseif block.blockType == blockTypes.forrestite then
+            forrestiteParticleSystem:setPosition(particleX, particleY)
+            forrestiteParticleSystem:emit(3)
+        end
+
+        local slotFilled = false
+        for slotIndex, slot in ipairs(inventory) do
+            if not slotFilled then
+                if slot.item == block.blockType.item then
+                    slotFilled = true
+                    slot.amount = slot.amount + 1
+                elseif slot.item == nil then
+                    slotFilled = true
+                    slot.item = block.blockType.item
+                    slot.amount = slot.amount + 1
+                end
             end
         end
     end
