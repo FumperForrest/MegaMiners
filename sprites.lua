@@ -41,8 +41,11 @@ forrestitePickFrames = {forrestitePickIdle, forrestitePickSwing, forrestitePickF
 dynamite1 = love.graphics.newQuad(288,32,32,32,spriteSheet:getDimensions())
 dynamite2 = love.graphics.newQuad(320,32,32,32,spriteSheet:getDimensions())
 dynamite3 = love.graphics.newQuad(352,32,32,32,spriteSheet:getDimensions())
+dynamite4 = love.graphics.newQuad(288,64,32,32,spriteSheet:getDimensions())
+dynamite5 = love.graphics.newQuad(320,64,32,32,spriteSheet:getDimensions())
+dynamite6 = love.graphics.newQuad(352,64,32,32,spriteSheet:getDimensions())
 
-dynamiteFrames = {dynamite1, dynamite2, dynamite3}
+dynamiteFrames = {dynamite1, dynamite2, dynamite3, dynamite4, dynamite5, dynamite6}
 
 explosionSprite = love.graphics.newQuad(224,192,64,64,spriteSheet:getDimensions())
 

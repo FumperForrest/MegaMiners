@@ -236,8 +236,33 @@ end
 -- Draw Dynamite
 function drawDynamite(x, y)
     if dynamiteThrown then
+        x,y = cam:cameraCoords(x, y)
+
         love.graphics.draw(spriteSheet, dynamiteFrames[math.floor(currentDynamiteFrame)], x, y, 0, dynamiteScale,
             dynamiteScale)
+    end
+end
+
+function drawExplosion(x, y)
+    if explosion then
+        -- Get explosion sprite dimensions
+        local ex, ey, ew, eh = explosionSprite:getViewport()
+
+        x,y = cam:cameraCoords(x, y)
+        
+        -- Calculate centered position
+        local drawX = x + BLOCK_WIDTH/2 - (ew * explosionScale) / 2
+        local drawY = y + BLOCK_HEIGHT/2 - (eh * explosionScale) / 2
+        
+        love.graphics.draw(
+            spriteSheet,
+            explosionSprite,
+            drawX,  -- Already centered via math above
+            drawY,
+            0,
+            explosionScale,
+            explosionScale
+        )
     end
 end
 
@@ -361,6 +386,24 @@ function love.update(dt)
     updateCamera(dt)
     updateDynamite(dt)
     updateExplosion(dt)
+
+    if love.keyboard.isDown("e") then
+        if not dynamiteThrown and not explosion and canMine then
+            for chunkIndex, chunk in ipairs(loadedChunks) do
+                for blockIndex, block in ipairs(chunk.blocks) do
+                    if block.blockType then
+                        if checkCollision(block.x, block.y, worldMouseX, worldMouseY, BLOCK_WIDTH, BLOCK_HEIGHT) and
+                            block.blockType.type == "mineable" then
+                            dynamiteThrown = true
+                            particleTriggered = false
+
+                            targetX, targetY = block.x + BLOCK_WIDTH/2, block.y + BLOCK_HEIGHT/2
+                        end
+                    end
+                end
+            end
+        end
+    end
 end
 
 -- Update Particles
@@ -422,28 +465,6 @@ function updatePick(dt)
     end
 end
 
--- Kaboom!
-function drawExplosion(x, y)
-    if explosion then
-        -- Get explosion sprite dimensions
-        local ex, ey, ew, eh = explosionSprite:getViewport()
-        
-        -- Calculate centered position
-        local drawX = x + BLOCK_WIDTH/2 - (ew * explosionScale) / 2
-        local drawY = y + BLOCK_HEIGHT/2 - (eh * explosionScale) / 2
-        
-        love.graphics.draw(
-            spriteSheet,
-            explosionSprite,
-            drawX,  -- Already centered via math above
-            drawY,
-            0,
-            explosionScale,
-            explosionScale
-        )
-    end
-end
-
 -- Kablamo!
 function explodeDynamite()
     -- Find the target block's grid position
@@ -479,12 +500,16 @@ end
 -- Update Dynamite
 function updateDynamite(dt)
     if dynamiteThrown then
-        currentDynamiteFrame = currentDynamiteFrame + dt * 5
+        currentDynamiteFrame = currentDynamiteFrame + dt * 15
         if currentDynamiteFrame <= 2 then
-            dynamiteScale = 10
+            dynamiteScale = 15
         elseif currentDynamiteFrame <= 3 then
-            dynamiteScale = 5
+            dynamiteScale = 10
         elseif currentDynamiteFrame <= 4 then
+            dynamiteScale = 5
+        elseif currentDynamiteFrame <= 5 then
+            dynamiteScale = 2.5
+        elseif currentDynamiteFrame <= 6 then
             dynamiteScale = 1
         else
             currentDynamiteFrame = 1
@@ -583,24 +608,6 @@ function love.keypressed(key)
             pick.type = pickaxes.forrestitePick
         end
         currentPickSprite = pick.type.idle
-
-        if key == "e" then
-            if not dynamiteThrown and not explosion and canMine then
-                for chunkIndex, chunk in ipairs(loadedChunks) do
-                    for blockIndex, block in ipairs(chunk.blocks) do
-                        if block.blockType then
-                            if checkCollision(block.x, block.y, worldMouseX, worldMouseY, BLOCK_WIDTH, BLOCK_HEIGHT) and
-                                block.blockType.type == "mineable" then
-                                dynamiteThrown = true
-                                particleTriggered = false
-
-                                targetX, targetY = block.x + 10, block.y + 10
-                            end
-                        end
-                    end
-                end
-            end
-        end
     end
 end
 
