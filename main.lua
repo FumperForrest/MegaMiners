@@ -513,6 +513,7 @@ function updateDynamite(dt)
             dynamiteScale = 1
         else
             currentDynamiteFrame = 1
+            dynamiteScale = 15
             explodeDynamite()
             dynamiteThrown = false
         end
