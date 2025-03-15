@@ -497,15 +497,14 @@ end
 function updateExplosion(dt)
     if explosion then
         explosionTimer = explosionTimer + dt * 200
-        if explosionTimer <= 50 then
-            explosionScale = 0.1
-        elseif explosionTimer <= 70 then
-            explosionScale = 0.5
-        elseif explosionTimer <= 90 then
+        explosionScale = explosionScale + 0.25
+        if explosionScale >= 3 then
             explosionScale = 3
-        elseif explosionTimer >= 150 then
+        end
+        if explosionTimer >= 150 then
             explosion = false
             explosionTimer = 0
+            explosionScale = 0
         end
     end
 end
