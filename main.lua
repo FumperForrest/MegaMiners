@@ -387,7 +387,7 @@ function love.update(dt)
     updateDynamite(dt)
     updateExplosion(dt)
 
-    if love.keyboard.isDown("e") then
+    if love.keyboard.isDown("q") then
         if not dynamiteThrown and not explosion and canMine then
             for chunkIndex, chunk in ipairs(loadedChunks) do
                 for blockIndex, block in ipairs(chunk.blocks) do
