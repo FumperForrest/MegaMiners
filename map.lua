@@ -7,6 +7,8 @@ CHUNK_WIDTH = 15
 CHUNK_HEIGHT = 15
 local CHEST_SLOTS = 28
 
+math.randomseed(os.time())
+
 -- Block Types
 blockTypes = {
     stone = { type = 'mineable', durability = 5, sprite = stoneSprite, item = stoneItem },
