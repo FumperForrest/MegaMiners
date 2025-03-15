@@ -551,13 +551,14 @@ function love.keypressed(key)
                         if block.blockType then
                             if checkCollision(block.x, block.y, worldMouseX, worldMouseY, BLOCK_WIDTH, BLOCK_HEIGHT) and block.blockType.type == 'mineable' then
                                 targetX, targetY = block.x+10, block.y+10
+                                dynamiteThrown = true
+                                particleTriggered = false
                             end
                         end
                     end
                 end
 
-                dynamiteThrown = true
-                particleTriggered = false
+                
             end
         end
     end
