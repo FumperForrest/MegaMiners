@@ -15,7 +15,8 @@ blockTypes = {
     diamonds = { type = 'mineable', durability = 35, sprite = diamondsSprite, item = diamondItem },
     amethyst = { type = 'mineable', durability = 50, sprite = amethystSprite, item = amethystItem },
     forrestite = { type = 'mineable', durability = 100, sprite = forrestiteSprite, item = forrestiteItem },
-    chest = { type = 'interactable', sprite = chest }
+    chest = { type = 'interactable', sprite = chest },
+    minerDoor = { type = 'special', sprite = minerDoorSprite }
 }
 
 -- Mineable Blocks
@@ -50,6 +51,13 @@ local function generateBlock(chunkX, chunkY, widthIndex, heightIndex)
         itemizeChest(block, carrotItem, 3)
         itemizeChest(block, breadItem, 5)
     -- Randomly decide if this block is a mineable resource
+    elseif math.random(1, 200) == 1 then
+        blockType = blockTypes.minerDoor
+        block = {
+            blockType = blockType,
+            x = chunkX * CHUNK_WIDTH * BLOCK_WIDTH + (widthIndex - 1) * BLOCK_WIDTH,
+            y = chunkY * CHUNK_HEIGHT * BLOCK_HEIGHT + (heightIndex - 1) * BLOCK_HEIGHT
+        }
     elseif math.random(1, 10) == 1 then
         blockType = mineables[math.random(1, #mineables)]
         block = {
