@@ -251,8 +251,8 @@ function drawExplosion(x, y)
         x,y = cam:cameraCoords(x, y)
         
         -- Calculate centered position
-        local drawX = x + BLOCK_WIDTH/2 - (ew * explosionScale) / 2
-        local drawY = y + BLOCK_HEIGHT/2 - (eh * explosionScale) / 2
+        local drawX = x - (ew * explosionScale) / 2
+        local drawY = y - (eh * explosionScale) / 2
         
         love.graphics.draw(
             spriteSheet,
