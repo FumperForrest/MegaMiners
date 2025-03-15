@@ -69,5 +69,18 @@ diamondParticle = love.graphics.newQuad(48,96,16,16,spriteSheet:getDimensions())
 amethestParticle = love.graphics.newQuad(64,96,16,16,spriteSheet:getDimensions())
 forrestiteParticle = love.graphics.newQuad(80,96,16,16,spriteSheet:getDimensions())
 
+minerSpriteSheet = love.graphics.newImage('Assets/minerSpriteSheet.png')
+
+minerWalk1 = love.graphics.newQuad(0,0,32,32,minerSpriteSheet:getDimensions())
+minerWalk2 = love.graphics.newQuad(32,0,32,32,minerSpriteSheet:getDimensions())
+minerWalk3 = love.graphics.newQuad(64,0,32,32,minerSpriteSheet:getDimensions())
+minerWalk4 = love.graphics.newQuad(96,0,32,32,minerSpriteSheet:getDimensions())
+minerWalk5 = love.graphics.newQuad(128,0,32,32,minerSpriteSheet:getDimensions())
+minerWalk6 = love.graphics.newQuad(160,0,32,32,minerSpriteSheet:getDimensions())
+minerWalk7 = love.graphics.newQuad(192,0,32,32,minerSpriteSheet:getDimensions())
+minerWalk8 = love.graphics.newQuad(224,0,32,32,minerSpriteSheet:getDimensions())
+
+minerDoorSprite = love.graphics.newQuad(224,64,32,32,spriteSheet:getDimensions())
+
 fullscreenIcon = love.graphics.newQuad(0,112,16,16,spriteSheet:getDimensions())
 exitIcon = love.graphics.newQuad(16,112,16,16,spriteSheet:getDimensions())
