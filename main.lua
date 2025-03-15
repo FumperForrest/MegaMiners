@@ -471,24 +471,31 @@ function explodeDynamite()
     local targetGridX = math.floor(targetX / BLOCK_WIDTH) * BLOCK_WIDTH
     local targetGridY = math.floor(targetY / BLOCK_HEIGHT) * BLOCK_HEIGHT
 
-    -- Break the target block and adjacent blocks
-    local offsets = {
-        {0, 0},          -- Center (target block)
-        {-BLOCK_WIDTH, 0}, {BLOCK_WIDTH, 0},  -- Left/Right
-        {0, -BLOCK_HEIGHT}, {0, BLOCK_HEIGHT} -- Up/Down
-    }
+    -- Define the explosion radius (in blocks)
+    local explosionRadius = 2  -- Adjust this value to change the size of the explosion
+    local radiusSquared = explosionRadius * explosionRadius * BLOCK_WIDTH * BLOCK_HEIGHT  -- Squared radius for distance comparison
 
-    for _, offset in ipairs(offsets) do
-        local checkX = targetGridX + offset[1]
-        local checkY = targetGridY + offset[2]
+    -- Break the target block and adjacent blocks within the circular radius
+    for dx = -explosionRadius, explosionRadius do
+        for dy = -explosionRadius, explosionRadius do
+            -- Calculate the position of the block to check
+            local checkX = targetGridX + dx * BLOCK_WIDTH
+            local checkY = targetGridY + dy * BLOCK_HEIGHT
 
-        -- Check all loaded chunks for a block at (checkX, checkY)
-        for _, chunk in ipairs(loadedChunks) do
-            for i = #chunk.blocks, 1, -1 do -- Iterate backwards to safely remove
-                local block = chunk.blocks[i]
-                if block.x == checkX and block.y == checkY then
-                    breakBlock(block, i, chunk)
-                    break -- No need to check further
+            -- Calculate the squared distance from the explosion center
+            local distanceSquared = (checkX - targetGridX) * (checkX - targetGridX) + (checkY - targetGridY) * (checkY - targetGridY)
+
+            -- Check if the block is within the circular radius
+            if distanceSquared <= radiusSquared then
+                -- Check all loaded chunks for a block at (checkX, checkY)
+                for _, chunk in ipairs(loadedChunks) do
+                    for i = #chunk.blocks, 1, -1 do -- Iterate backwards to safely remove
+                        local block = chunk.blocks[i]
+                        if block.x == checkX and block.y == checkY then
+                            breakBlock(block, i, chunk)
+                            break -- No need to check further
+                        end
+                    end
                 end
             end
         end
