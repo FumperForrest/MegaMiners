@@ -567,22 +567,26 @@ end
 -- Input Functions
 function love.mousepressed(mx, my, button)
     if button == 1 then
+        -- Left click: Toggle fullscreen or close chest
         if checkCollision(fullscreenX, fullscreenY, mx, my, 16, 16) then
             toggleFullscreen()
-        elseif checkCollision(chestMenuX, chestMenuY, mx, my, 16 * chestMenuScale, 16 * chestMenuScale) then
-            if chestOpen then
-                chestOpen = nil
-                canMine = true
-            end
+        elseif chestOpen and checkCollision(chestMenuX, chestMenuY, mx, my, 16 * chestMenuScale, 16 * chestMenuScale) then
+            chestOpen = nil
+            canMine = true
         end
     elseif button == 2 then
+        -- Right click: Open chest
         for chunkIndex, chunk in ipairs(loadedChunks) do
             for blockIndex, block in ipairs(chunk.blocks) do
-                if block.blockType == chest then
+                -- Check if the block is a chest
+                if block.blockType == blockTypes.chest then
+                    -- Convert block world coordinates to screen coordinates
                     local camBlockX, camBlockY = cam:cameraCoords(block.x, block.y)
-                    if checkCollision(camBlockX, camBlockY, mx, my, 32, 32) then
+                    -- Check if the mouse is over the chest
+                    if checkCollision(camBlockX, camBlockY, mx, my, BLOCK_WIDTH, BLOCK_HEIGHT) then
                         chestOpen = block
                         canMine = false
+                        break -- Exit the loop after opening the chest
                     end
                 end
             end
