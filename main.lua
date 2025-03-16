@@ -36,6 +36,10 @@ local explosionTimer = 0
 
 -- Load Function
 function love.load()
+
+    love.window.setTitle("MegaMiners")
+    love.window.setIcon(love.image.newImageData("Assets/megaMinersLogo.png"))
+
     cam = camera()
     love.graphics.setDefaultFilter("nearest", "nearest")
 
@@ -113,6 +117,13 @@ function initializePickaxes()
             final = forrestitePickFinal,
             damage = 15,
             frames = forrestitePickFrames
+        },
+        rubyPick = {
+            idle = rubyPickIdle,
+            swing = rubyPickSwing,
+            final = rubyPickFinal,
+            damage = 20,
+            frames = rubyPickFrames
         }
     }
 
@@ -289,8 +300,8 @@ function drawParticles()
     love.graphics.draw(diamondParticleSystem)
     love.graphics.draw(amethystParticleSystem)
     love.graphics.draw(forrestiteParticleSystem)
+    love.graphics.draw(rubyParticleSystem)
 end
-
 -- Draw Inventory
 function drawInventory()
     local slotMargin = 5
@@ -414,6 +425,7 @@ function updateParticles(dt)
     diamondParticleSystem:update(dt)
     amethystParticleSystem:update(dt)
     forrestiteParticleSystem:update(dt)
+    rubyParticleSystem:update(dt)
 end
 
 -- Update Pick
@@ -610,6 +622,8 @@ function love.keypressed(key)
             pick.type = pickaxes.amethystPick
         elseif key == "6" then
             pick.type = pickaxes.forrestitePick
+        elseif key == "7" then
+            pick.type = pickaxes.rubyPick
         end
         currentPickSprite = pick.type.idle
     end
@@ -656,6 +670,9 @@ function breakBlock(block, blockIndex, chunk)
         elseif block.blockType == blockTypes.forrestite then
             forrestiteParticleSystem:setPosition(particleX, particleY)
             forrestiteParticleSystem:emit(3)
+        elseif block.blockType == blockTypes.ruby then
+            rubyParticleSystem:setPosition(particleX, particleY)
+            rubyParticleSystem:emit(3)
         end
 
         local slotFilled = false

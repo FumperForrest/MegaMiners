@@ -38,12 +38,20 @@ forrestitePickFinal = love.graphics.newQuad(256,32,32,32,spriteSheet:getDimensio
 
 forrestitePickFrames = {forrestitePickIdle, forrestitePickSwing, forrestitePickFinal}
 
-dynamite1 = love.graphics.newQuad(288,32,32,32,spriteSheet:getDimensions())
-dynamite2 = love.graphics.newQuad(320,32,32,32,spriteSheet:getDimensions())
-dynamite3 = love.graphics.newQuad(352,32,32,32,spriteSheet:getDimensions())
-dynamite4 = love.graphics.newQuad(288,64,32,32,spriteSheet:getDimensions())
-dynamite5 = love.graphics.newQuad(320,64,32,32,spriteSheet:getDimensions())
-dynamite6 = love.graphics.newQuad(352,64,32,32,spriteSheet:getDimensions())
+rubyPickIdle = love.graphics.newQuad(288,32,32,32,spriteSheet:getDimensions())
+rubyPickSwing = love.graphics.newQuad(320,32,32,32,spriteSheet:getDimensions())
+rubyPickFinal = love.graphics.newQuad(352,32,32,32,spriteSheet:getDimensions())
+
+rubyPickFrames = {rubyPickIdle, rubyPickSwing, rubyPickFinal}
+
+
+
+dynamite1 = love.graphics.newQuad(288,192,32,32,spriteSheet:getDimensions())
+dynamite2 = love.graphics.newQuad(320,192,32,32,spriteSheet:getDimensions())
+dynamite3 = love.graphics.newQuad(352,192,32,32,spriteSheet:getDimensions())
+dynamite4 = love.graphics.newQuad(288,224,32,32,spriteSheet:getDimensions())
+dynamite5 = love.graphics.newQuad(320,224,32,32,spriteSheet:getDimensions())
+dynamite6 = love.graphics.newQuad(352,224,32,32,spriteSheet:getDimensions())
 
 dynamiteFrames = {dynamite1, dynamite2, dynamite3, dynamite4, dynamite5, dynamite6}
 
@@ -61,6 +69,7 @@ goldSprite = love.graphics.newQuad(64,64,32,32,spriteSheet:getDimensions())
 diamondsSprite = love.graphics.newQuad(96,64,32,32,spriteSheet:getDimensions())
 amethystSprite = love.graphics.newQuad(128,64,32,32,spriteSheet:getDimensions())
 forrestiteSprite = love.graphics.newQuad(160,64,32,32,spriteSheet:getDimensions())
+rubySprite = love.graphics.newQuad(192,64,32,32,spriteSheet:getDimensions())
 
 stoneItemSprite = love.graphics.newQuad(32,112,16,16,spriteSheet:getDimensions())
 ironItemSprite = love.graphics.newQuad(48,112,16,16,spriteSheet:getDimensions())
@@ -68,11 +77,13 @@ goldItemSprite = love.graphics.newQuad(64,112,16,16,spriteSheet:getDimensions())
 diamondItemSprite = love.graphics.newQuad(80,112,16,16,spriteSheet:getDimensions())
 amethystItemSprite = love.graphics.newQuad(96,112,16,16,spriteSheet:getDimensions())
 forrestiteItemSprite = love.graphics.newQuad(112,112,16,16,spriteSheet:getDimensions())
+rubyItemSprite = love.graphics.newQuad(176,112,16,16,spriteSheet:getDimensions())
+
 carrotItemSprite = love.graphics.newQuad(128,112,16,16,spriteSheet:getDimensions())
 breadItemSprite = love.graphics.newQuad(144,112,16,16,spriteSheet:getDimensions())
 penisItemSprite = love.graphics.newQuad(160,112,16,16,spriteSheet:getDimensions())
 
-chest = love.graphics.newQuad(192,64,32,32,spriteSheet:getDimensions())
+chest = love.graphics.newQuad(224,64,32,32,spriteSheet:getDimensions())
 chestMenu = love.graphics.newQuad(0,128,224,128,spriteSheet:getDimensions())
 
 parallax1 = love.graphics.newImage('Assets/parallax1.png')
@@ -87,6 +98,8 @@ goldParticle = love.graphics.newQuad(32,96,16,16,spriteSheet:getDimensions())
 diamondParticle = love.graphics.newQuad(48,96,16,16,spriteSheet:getDimensions())
 amethestParticle = love.graphics.newQuad(64,96,16,16,spriteSheet:getDimensions())
 forrestiteParticle = love.graphics.newQuad(80,96,16,16,spriteSheet:getDimensions())
+rubyParticle = love.graphics.newQuad(96,96,16,16,spriteSheet:getDimensions())
+
 
 minerSpriteSheet = love.graphics.newImage('Assets/minerSpriteSheet.png')
 
@@ -101,7 +114,7 @@ minerWalk8 = love.graphics.newQuad(224,0,32,32,minerSpriteSheet:getDimensions())
 
 minerWalkFrames = {minerWalk1, minerWalk2, minerWalk3, minerWalk4, minerWalk5, minerWalk6, minerWalk7, minerWalk8}
 
-minerDoorSprite = love.graphics.newQuad(224,64,32,32,spriteSheet:getDimensions())
+minerDoorSprite = love.graphics.newQuad(256,64,32,32,spriteSheet:getDimensions())
 
 fullscreenIcon = love.graphics.newQuad(0,112,16,16,spriteSheet:getDimensions())
 exitIcon = love.graphics.newQuad(16,112,16,16,spriteSheet:getDimensions())

@@ -17,12 +17,13 @@ blockTypes = {
     diamonds = { type = 'mineable', durability = 35, sprite = diamondsSprite, item = diamondItem },
     amethyst = { type = 'mineable', durability = 50, sprite = amethystSprite, item = amethystItem },
     forrestite = { type = 'mineable', durability = 100, sprite = forrestiteSprite, item = forrestiteItem },
+    ruby = { type = 'mineable', durability = 200, sprite = rubySprite, item = rubyItem},
     chest = { type = 'interactable', sprite = chest },
     minerDoor = { type = 'special', sprite = minerDoorSprite }
 }
 
 -- Mineable Blocks
-local mineables = { blockTypes.stone, blockTypes.iron, blockTypes.gold, blockTypes.diamonds, blockTypes.amethyst, blockTypes.forrestite }
+local mineables = { blockTypes.stone, blockTypes.iron, blockTypes.gold, blockTypes.diamonds, blockTypes.amethyst, blockTypes.forrestite, blockTypes.ruby }
 
 -- Chunks and Blocks
 chunks = {}
@@ -48,6 +49,7 @@ local function generateBlock(chunkX, chunkY, widthIndex, heightIndex)
         itemizeChest(block, ironItem, 3)
         itemizeChest(block, goldItem, 3)
         itemizeChest(block, diamondItem, 5)
+        itemizeChest(block, rubyItem, 5)
         itemizeChest(block, amethystItem, 1)
         itemizeChest(block, forrestiteItem, 1)
         itemizeChest(block, carrotItem, 3)

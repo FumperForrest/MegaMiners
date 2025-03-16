@@ -6,3 +6,4 @@ amethystItem = { type = 'material', sprite = amethystItemSprite}
 forrestiteItem = { type = 'material', sprite = forrestiteItemSprite}
 carrotItem = { type = 'material', sprite = carrotItemSprite}
 breadItem = { type = 'material', sprite = breadItemSprite}
+rubyItem = { type = 'material', sprite = rubyItemSprite}

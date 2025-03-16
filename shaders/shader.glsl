@@ -16,6 +16,8 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
         glowColor = vec4(0.5, 0.0, 0.5, 0.5); // Amethyst (purple)
     } else if (pixel.g > 0.5 && pixel.b < 0.5 && pixel.r < 0.5) {
         glowColor = vec4(0.0, 1.0, 0.0, 0.5); // Forrestite (green)
+    } else if (pixel.r > 0.5 && pixel.g < 0.1 && pixel.b < 0.1) {
+        glowColor = vec4(1.0, 0.255, 0.0, 0.5); // Ruby (red)
     }
 
     // Check neighboring pixels
@@ -36,6 +38,8 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
             glowColor = vec4(0.5, 0.0, 0.5, 0.2); // Amethyst (purple)
         } else if (neighbor.g > 0.5 && neighbor.b < 0.5 && neighbor.r < 0.5) {
             glowColor = vec4(0.0, 1.0, 0.0, 0.2); // Forrestite (green)
+        } else if (neighbor.r > 0.5 && neighbor.g < 0.1 && neighbor.b < 0.1) {
+        glowColor = vec4(1.0, 0.0, 0.0, 0.5); // Ruby (red)
         }
     }
 
